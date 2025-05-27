@@ -62,6 +62,9 @@ def compute_auc(
         # Concatenate all id embeddings into one tensor
         all_ids = torch.cat([x[0] for x in embeddings_list], dim=0)
         all_embeddings = torch.cat([x[1] for x in embeddings_list], dim=0)
+
+        print("all_ids: ",all_ids.shape)
+        print("all_embeddings: ",all_embeddings.shape)
         
         euclidean_scores = []
         euclidean_labels = []
@@ -74,25 +77,27 @@ def compute_auc(
         cosine_similarities = torch.mm(all_embeddings_norm, all_embeddings_norm.t())  # Cosine similarity matrix
         
         # Compute labels (same id = 0, different id = 1)
-        print("all_ids: ",all_ids, all_ids.shape)
         labels = (all_ids.unsqueeze(1) == all_ids.unsqueeze(0)).int().to(device)
-        print("labels: ",labels, labels.shape)
-
 
         # Flatten and filter results
         euclidean_scores = euclidean_distances[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
         euclidean_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
         
-        cosine_scores = cosine_similarities[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
-        cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
-        
+        # cosine_scores = cosine_similarities[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
+        # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
+
+        cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0]))
+        predict_class = cosine_similarities.argmax(dim = -1)
+
+
         # Compute ROC AUC for Euclidean distance
         all_labels['id_euclidean'] = 1 - np.array(euclidean_labels)
         all_preds['id_euclidean'] = np.array(euclidean_scores)
 
         # Compute ROC AUC for Cosine similarity
-        all_labels['id_cosine'] = np.array(cosine_labels)
-        all_preds['id_cosine'] = np.array(cosine_scores)
+        all_labels['id_cosine'] =  all_ids.cpu().numpy()     # np.array(cosine_labels)
+        all_preds['id_cosine'] = predict_class.cpu().numpy()       #np.array(cosine_scores)
+        print('check shape: ', all_ids.shape, predict_class.shape)
         
         # # Calculate accuracy for Euclidean distance
         # euclidean_optimal_idx = np.argmax(tpr_euclidean - fpr_euclidean) # Chọn ngưỡng tại điểm có giá trị tpr - fpr lớn nhất trên đường ROC, vì đây là nơi tối ưu hóa sự cân bằng giữa tỷ lệ phát hiện (TPR) và tỷ lệ báo động giả (FPR).
