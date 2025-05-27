@@ -88,7 +88,7 @@ def compute_auc(
         # cosine_scores = cosine_similarities[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
         # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
 
-        cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0]))
+        cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0])).cpu()
         predict_class_index = all_ids[cosine_similarities.argmax(dim = -1)].unsqueeze(1).cpu()
 
         predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
