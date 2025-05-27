@@ -66,6 +66,7 @@ def compute_auc(
 
         print("all_ids: ",all_ids.shape)
         print("all_embeddings: ",all_embeddings.shape)
+        print('num_classes: ', num_classes)
         
         euclidean_scores = []
         euclidean_labels = []
@@ -88,7 +89,8 @@ def compute_auc(
         # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
 
         cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0]))
-        predict_class_index = cosine_similarities.argmax(dim = -1, keepdim= True).cpu()
+        predict_class_index = all_ids[cosine_similarities.argmax(dim = -1)].unsqueeze(1)
+
         predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
         predict_class = predict_class.scatter_(
             dim=1,
