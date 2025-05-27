@@ -25,6 +25,7 @@ class ConcatMultiTaskLoss(torch.nn.Module):
         self.emotion_loss = FocalLoss(alpha_weights={0:0.232, 1:0.768}, gamma_weights={0:0, 1:1}, num_classes=2)
         
         # hyper parameter
+        self.id_weight = loss_weight['loss_id_weight']
         self.spectacles_weight = loss_weight['loss_spectacles_weight']
         self.facial_hair_weight = loss_weight['loss_facial_hair_weight']
         self.pose_weight = loss_weight['loss_pose_weight']
@@ -56,7 +57,7 @@ class ConcatMultiTaskLoss(torch.nn.Module):
         
         loss_id = self.id_loss(x_id_logits, id, x_id_norm)
         
-        total_loss =    loss_id + \
+        total_loss =    loss_id*self.id_weight + \
                         loss_gender * self.gender_weight + \
                         loss_emotion * self.emotion_weight + \
                         loss_pose * self.pose_weight + \

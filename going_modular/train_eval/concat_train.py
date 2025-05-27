@@ -44,6 +44,8 @@ def fit(
         ) = train_epoch(train_dataloader, model, criterion, optimizer, device)
         
         (   
+            test_loss,
+            test_loss_id,
             test_loss_gender,
             test_loss_emotion,
             test_loss_pose,
@@ -70,8 +72,9 @@ def fit(
         test_id_euclidean_auc = test_auc['id_euclidean']
         
         # Log các giá trị vào TensorBoard
-        writer.add_scalar('Loss/train', train_loss, epoch+1)
-        
+        writer.add_scalars(main_tag='Loss/train', tag_scalar_dict={
+            'train': train_loss, 'test': test_loss}, global_step=epoch+1)
+
         writer.add_scalars(main_tag='Loss/gender', tag_scalar_dict={
             'train': train_loss_gender, 'test': test_loss_gender}, global_step=epoch+1)
         
@@ -126,6 +129,8 @@ def fit(
         }
 
         test_metrics = {
+            "loss": test_loss,
+            "loss_id": test_loss_id,
             "loss_gender": test_loss_gender,
             "loss_emotion": test_loss_emotion,
             "loss_pose": test_loss_pose,
@@ -242,6 +247,8 @@ def test_epoch(
     model.eval()
 
     # Các biến lưu trữ tổng loss từng loại
+    total_loss_total = 0
+    total_loss_id = 0
     total_loss_gender = 0
     total_loss_emotion = 0
     total_loss_pose = 0
@@ -266,6 +273,8 @@ def test_epoch(
 
 
             # Cộng dồn các giá trị loss riêng biệt
+            total_loss_total += total_loss.item()
+            total_loss_id += loss_id.item()
             total_loss_gender += loss_gender.item()
             total_loss_emotion += loss_emotion.item()
             total_loss_pose += loss_pose.item()
@@ -274,6 +283,9 @@ def test_epoch(
 
     # Tính trung bình của từng loại loss
     num_batches = len(test_dataloader)
+    
+    avg_test_loss = total_loss_total / num_batches
+    avg_loss_id = total_loss_id / num_batches
     avg_loss_gender = total_loss_gender / num_batches
     avg_loss_emotion = total_loss_emotion / num_batches
     avg_loss_pose = total_loss_pose / num_batches
@@ -282,6 +294,8 @@ def test_epoch(
 
     # Trả về tất cả các loss dưới dạng tuple
     return (
+        avg_test_loss,
+        avg_loss_id,
         avg_loss_gender,
         avg_loss_emotion,
         avg_loss_pose,

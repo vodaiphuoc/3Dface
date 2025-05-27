@@ -64,9 +64,9 @@ def compute_auc(
         all_ids = torch.cat([x[0] for x in embeddings_list], dim=0)
         all_embeddings = torch.cat([x[1] for x in embeddings_list], dim=0)
 
-        print("all_ids: ",all_ids.shape)
-        print("all_embeddings: ",all_embeddings.shape)
-        print('num_classes: ', num_classes)
+        # print("all_ids: ",all_ids.shape)
+        # print("all_embeddings: ",all_embeddings.shape)
+        # print('num_classes: ', num_classes)
         
         euclidean_scores = []
         euclidean_labels = []
@@ -112,7 +112,7 @@ def compute_auc(
         # Compute ROC AUC for Cosine similarity
         all_labels['id_cosine'] =  label_class.numpy()     # np.array(cosine_labels)
         all_preds['id_cosine'] = predict_class.numpy()       #np.array(cosine_scores)
-        print('check shape: ', label_class.shape, predict_class.shape)
+        # print('check shape: ', label_class.shape, predict_class.shape)
         
         # # Calculate accuracy for Euclidean distance
         # euclidean_optimal_idx = np.argmax(tpr_euclidean - fpr_euclidean) # Chọn ngưỡng tại điểm có giá trị tpr - fpr lớn nhất trên đường ROC, vì đây là nơi tối ưu hóa sự cân bằng giữa tỷ lệ phát hiện (TPR) và tỷ lệ báo động giả (FPR).
