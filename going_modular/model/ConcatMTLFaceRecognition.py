@@ -37,7 +37,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_normalmap_pose, _), 
             (x_normalmap_emotion, _ ), 
             (x_normalmap_gender, _), 
-            (x_normalmap_id, _ ) 
+            x_normalmap_id, _  
         ) = self.mtl_normalmap(x_normalmap)
         
         (
