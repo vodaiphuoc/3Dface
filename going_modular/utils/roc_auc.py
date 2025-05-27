@@ -89,18 +89,18 @@ def compute_auc(
 
         cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0]))
         predict_class_index = cosine_similarities.argmax(dim = -1, keepdim= True)
-        predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8)
+        predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
         predict_class = predict_class.scatter_(
             dim=1,
             index=predict_class_index,
-            src=torch.ones_like(predict_class_index, dtype= predict_class.dtype)
+            src=torch.ones_like(predict_class_index, dtype= predict_class.dtype, device = 'cpu')
         )
 
-        label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8)
+        label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8, device = 'cpu')
         label_class = label_class.scatter_(
             dim=1, 
             index=all_ids.unsqueeze(1),
-            src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype)
+            src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype, device = 'cpu')
         )
 
         # Compute ROC AUC for Euclidean distance
@@ -108,8 +108,8 @@ def compute_auc(
         all_preds['id_euclidean'] = np.array(euclidean_scores)
 
         # Compute ROC AUC for Cosine similarity
-        all_labels['id_cosine'] =  label_class.cpu().numpy()     # np.array(cosine_labels)
-        all_preds['id_cosine'] = predict_class.cpu().numpy()       #np.array(cosine_scores)
+        all_labels['id_cosine'] =  label_class.numpy()     # np.array(cosine_labels)
+        all_preds['id_cosine'] = predict_class.numpy()       #np.array(cosine_scores)
         print('check shape: ', label_class.shape, predict_class.shape)
         
         # # Calculate accuracy for Euclidean distance
