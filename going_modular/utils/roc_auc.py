@@ -106,6 +106,7 @@ def compute_auc(
         # Tính AUC cho từng tác vụ
         auc_scores = {}
         for task in all_labels:
+            print('task:',task)
             unique_classes = np.unique(all_labels[task])
             if len(unique_classes) < 2:
                 # Nếu chỉ có một lớp, gán AUC là None hoặc giá trị mặc định
