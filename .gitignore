@@ -6,3 +6,4 @@ preprocess/
 myenv/
 test.py
 test_models/
+push.py

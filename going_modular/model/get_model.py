@@ -10,6 +10,8 @@ from torchao.quantization.qat import (
     IntXQuantizationAwareTrainingConfig,
 )
 
+from huggingface_hub import hf_hub_download
+
 
 def build(
         config: dict, 
@@ -19,20 +21,38 @@ def build(
     
     mtl_normalmap = MTLFaceRecognition(config['backbone'], config['num_classes'])
     if load_checkpoint:
-        checkpoint_1 = torch.load(config['checkpoint_1'])
+        cache_ckpt_path1 = hf_hub_download(
+            "Daiphuoc/3DFaceCheckpoints", 
+            repo_type="model",
+            filename = "checkpoint.pth",
+            subfolder= "normalmap/models",
+        )
+        checkpoint_1 = torch.load(cache_ckpt_path1)
         mtl_normalmap.load_state_dict(checkpoint_1['model_state_dict'])
 
     
     mtl_albedo = MTLFaceRecognition(config['backbone'], config['num_classes'])
     if load_checkpoint:
-        checkpoint_2 = torch.load(config['checkpoint_2'])
+        cache_ckpt_path2 = hf_hub_download(
+            "Daiphuoc/3DFaceCheckpoints", 
+            repo_type="model",
+            filename = "checkpoint.pth",
+            subfolder= "albedo/models",
+        )
+        checkpoint_2 = torch.load(cache_ckpt_path2)
         mtl_albedo.load_state_dict(checkpoint_2['model_state_dict'])
 
     
     mtl_depthmap = MTLFaceRecognition(config['backbone'], config['num_classes'])
     
     if load_checkpoint:
-        checkpoint_3 = torch.load(config['checkpoint_3'])
+        cache_ckpt_path3 = hf_hub_download(
+            "Daiphuoc/3DFaceCheckpoints", 
+            repo_type="model",
+            filename = "checkpoint.pth",
+            subfolder= "depthmap/models",
+        )
+        checkpoint_3 = torch.load(cache_ckpt_path3)
         mtl_depthmap.load_state_dict(checkpoint_3['model_state_dict'])
 
     model = ConcatMTLFaceRecognitionV3(mtl_normalmap, mtl_albedo, mtl_depthmap, config['num_classes']).to(torch.float32)
