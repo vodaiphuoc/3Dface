@@ -1,0 +1,9 @@
+**__pycache__**
+**logs**
+**models**
+doc/
+preprocess/
+checkpoint/
+myenv/
+test.py
+test_models/
