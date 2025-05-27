@@ -74,7 +74,10 @@ def compute_auc(
         cosine_similarities = torch.mm(all_embeddings_norm, all_embeddings_norm.t())  # Cosine similarity matrix
         
         # Compute labels (same id = 0, different id = 1)
+        print("all_ids: ",all_ids, all_ids.shape)
         labels = (all_ids.unsqueeze(1) == all_ids.unsqueeze(0)).int().to(device)
+        print("labels: ",labels, labels.shape)
+
 
         # Flatten and filter results
         euclidean_scores = euclidean_distances[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
@@ -106,7 +109,6 @@ def compute_auc(
         # Tính AUC cho từng tác vụ
         auc_scores = {}
         for task in all_labels:
-            print('task:',task)
             unique_classes = np.unique(all_labels[task])
             if len(unique_classes) < 2:
                 # Nếu chỉ có một lớp, gán AUC là None hoặc giá trị mặc định
