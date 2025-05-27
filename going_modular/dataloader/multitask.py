@@ -124,11 +124,14 @@ class CustomExrDataset(Dataset):
         
         return weight_class
 
-
+#########################################################################################################################3
 class ConcatCustomExrDatasetV3(Dataset):
     
     def __init__(self, dataset_dir:str, transform, train = True):
         self.metadata_path = os.path.join(dataset_dir, 'train_set.csv') if train else os.path.join(dataset_dir, 'test_set.csv')
+        self.df_metadata = pd.read_csv(self.metadata_path)
+
+
         split = 'train' if train else 'test'
         self.albedo_dir = Path(dataset_dir) / 'Albedo' / split
         self.depth_dir = Path(dataset_dir) / 'Depth_Map' / split
@@ -201,10 +204,9 @@ class ConcatCustomExrDatasetV3(Dataset):
     def __extract_csv(self, image_path):
         id = image_path.parent.name
         session = image_path.stem
-        df = pd.read_csv(self.metadata_path)
         
         # Lọc dữ liệu theo ID và session
-        filtered_data = df[(df['id'] == int(id)) & (df['session'] == session)]
+        filtered_data = self.df_metadata[(self.df_metadata['id'] == int(id)) & (self.df_metadata['session'] == session)]
         
         # Kiểm tra nếu không có hoặc có nhiều hơn 1 dòng được trả về
         if filtered_data.shape[0] != 1:
@@ -214,7 +216,7 @@ class ConcatCustomExrDatasetV3(Dataset):
         
         return row["Gender"], row["Spectacles"], row["Facial_Hair"], row["Pose"], row["Emotion"]
 
-
+##########################################################################################################################3
 class ConcatCustomExrDatasetV2(Dataset):
     
     
