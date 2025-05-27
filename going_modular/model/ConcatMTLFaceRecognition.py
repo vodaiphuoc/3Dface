@@ -37,7 +37,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_normalmap_pose, _), 
             (x_normalmap_emotion, _ ), 
             (x_normalmap_gender, _), 
-            x_normalmap_id, _  
+            x_normalmap_id, x_normalmap_id_norm  
         ) = self.mtl_normalmap(x_normalmap)
         
         (
@@ -46,7 +46,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_albedo_pose, _), 
             (x_albedo_emotion, _), 
             (x_albedo_gender, _ ), 
-            x_albedo_id, _  
+            x_albedo_id, x_albedo_id_norm 
         ) = self.mtl_albedo(x_albedo)
         
         (
@@ -55,7 +55,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_depthmap_pose, _ ), 
             (x_depthmap_emotion, _), 
             (x_depthmap_gender, _ ), 
-            x_depthmap_id, _
+            x_depthmap_id, x_depthmap_id_norm
         ) = self.mtl_depthmap(x_depthmap)
             
         # Concatenate embeddings from all modalities (normalmap, albedo, depthmap)
@@ -64,7 +64,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
         pose_embedding = torch.cat([x_normalmap_pose, x_albedo_pose, x_depthmap_pose], dim=1)
         emotion_embedding = torch.cat([x_normalmap_emotion, x_albedo_emotion, x_depthmap_emotion], dim=1)
         gender_embedding = torch.cat([x_normalmap_gender, x_albedo_gender, x_depthmap_gender], dim=1)
-        id_embedding = torch.cat([x_normalmap_id, x_albedo_id, x_depthmap_id], dim=1)
+        id_embedding = torch.cat([x_normalmap_id_norm, x_albedo_id_norm, x_depthmap_id_norm], dim=1)
 
         # Pass concatenated embeddings through their respective linear layers
         x_id_logits, x_id_norm = self.id_head(id_embedding)
