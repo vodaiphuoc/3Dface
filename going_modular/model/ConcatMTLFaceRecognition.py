@@ -46,7 +46,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_albedo_pose, _), 
             (x_albedo_emotion, _), 
             (x_albedo_gender, _ ), 
-            (x_albedo_id, _ ) 
+            x_albedo_id, _  
         ) = self.mtl_albedo(x_albedo)
         
         (
@@ -55,7 +55,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             (x_depthmap_pose, _ ), 
             (x_depthmap_emotion, _), 
             (x_depthmap_gender, _ ), 
-            (x_depthmap_id, _) 
+            x_depthmap_id, _
         ) = self.mtl_depthmap(x_depthmap)
             
         # Concatenate embeddings from all modalities (normalmap, albedo, depthmap)
