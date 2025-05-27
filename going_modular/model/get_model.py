@@ -39,12 +39,13 @@ def build(
 
     if config['use_quant']:
         if training:
-            activation_config = FakeQuantizeConfig(torch.int8, "per_token", is_symmetric=False)
+            # activation_config = FakeQuantizeConfig(torch.int8, "per_token", is_symmetric=False)
             weight_config = FakeQuantizeConfig(torch.int4, group_size=32)
             quantize_(
                 model,
-                IntXQuantizationAwareTrainingConfig(activation_config, weight_config),
+                IntXQuantizationAwareTrainingConfig(weight_config),
             )
         else:
             quantize_(model, Int8DynamicActivationInt4WeightConfig(group_size= 32))
+    
     return model

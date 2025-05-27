@@ -8,7 +8,7 @@ torch.manual_seed(seed)
 
 from torchao.quantization import (
     quantize_,
-    Int8DynamicActivationInt4WeightConfig,
+    Int4WeightOnlyConfig,
 )
 
 class ModelCheckpoint:
@@ -19,7 +19,7 @@ class ModelCheckpoint:
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
-            quantize_(model, Int8DynamicActivationInt4WeightConfig(group_size=32))
+            quantize_(model, Int4WeightOnlyConfig(group_size=32))
 
         checkpoint = {
             'epoch': epoch,
