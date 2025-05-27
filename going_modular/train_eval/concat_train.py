@@ -51,7 +51,7 @@ def fit(
             test_loss_spectacles,
         ) = test_epoch(test_dataloader, model, criterion, device)
         
-        train_auc = compute_auc(train_dataloader, model, device)
+        train_auc = compute_auc(train_dataloader, model, device, conf["num_classes"])
         train_gender_auc = train_auc['gender']
         train_spectacles_auc = train_auc['spectacles']
         train_facial_hair_auc = train_auc['facial_hair']
@@ -60,7 +60,7 @@ def fit(
         train_id_cosine_auc = train_auc['id_cosine']
         train_id_euclidean_auc = train_auc['id_euclidean']
         
-        test_auc = compute_auc(test_dataloader, model, device)
+        test_auc = compute_auc(test_dataloader, model, device, conf["num_classes"])
         test_gender_auc = test_auc['gender']
         test_spectacles_auc = test_auc['spectacles']
         test_facial_hair_auc = test_auc['facial_hair']

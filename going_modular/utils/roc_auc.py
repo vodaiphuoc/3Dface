@@ -9,7 +9,8 @@ torch.manual_seed(seed)
 def compute_auc(
     dataloader: torch.utils.data.DataLoader, 
     model: torch.nn.Module, 
-    device: str
+    device: str,
+    num_classes:int
 ):
     
     model.eval()
@@ -87,17 +88,29 @@ def compute_auc(
         # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
 
         cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0]))
-        predict_class = cosine_similarities.argmax(dim = -1)
+        predict_class_index = cosine_similarities.argmax(dim = -1, keepdim= True)
+        predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8)
+        predict_class = predict_class.scatter_(
+            dim=1,
+            index=predict_class_index,
+            src=torch.ones_like(predict_class_index, dtype= predict_class.dtype)
+        )
 
+        label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8)
+        label_class = label_class.scatter_(
+            dim=1, 
+            index=all_ids.unsqueeze(1),
+            src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype)
+        )
 
         # Compute ROC AUC for Euclidean distance
         all_labels['id_euclidean'] = 1 - np.array(euclidean_labels)
         all_preds['id_euclidean'] = np.array(euclidean_scores)
 
         # Compute ROC AUC for Cosine similarity
-        all_labels['id_cosine'] =  all_ids.cpu().numpy()     # np.array(cosine_labels)
+        all_labels['id_cosine'] =  label_class.cpu().numpy()     # np.array(cosine_labels)
         all_preds['id_cosine'] = predict_class.cpu().numpy()       #np.array(cosine_scores)
-        print('check shape: ', all_ids.shape, predict_class.shape)
+        print('check shape: ', label_class.shape, predict_class.shape)
         
         # # Calculate accuracy for Euclidean distance
         # euclidean_optimal_idx = np.argmax(tpr_euclidean - fpr_euclidean) # Chọn ngưỡng tại điểm có giá trị tpr - fpr lớn nhất trên đường ROC, vì đây là nơi tối ưu hóa sự cân bằng giữa tỷ lệ phát hiện (TPR) và tỷ lệ báo động giả (FPR).
