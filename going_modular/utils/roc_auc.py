@@ -6,6 +6,27 @@ from sklearn.metrics import roc_auc_score
 seed = 42
 torch.manual_seed(seed)
 
+
+def _get_predict_label_class(similarity_matrix: torch.Tensor, all_ids: torch.Tensor, num_classes:int):
+    similarity_matrix = torch.diagonal_scatter(similarity_matrix, torch.tensor([-1000]*similarity_matrix.shape[0])).cpu()
+    predict_class_index = all_ids[similarity_matrix.argmax(dim = -1)].unsqueeze(1).cpu().to(torch.int64)
+
+    predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
+    predict_class = predict_class.scatter_(
+        dim=1,
+        index=predict_class_index,
+        src=torch.ones_like(predict_class_index, dtype= predict_class.dtype, device = 'cpu')
+    )
+
+    label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8, device = 'cpu')
+    label_class = label_class.scatter_(
+        dim=1, 
+        index=all_ids.unsqueeze(1).cpu().to(torch.int64),
+        src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype, device = 'cpu')
+    )
+
+    return predict_class, label_class
+
 def compute_auc(
     dataloader: torch.utils.data.DataLoader, 
     model: torch.nn.Module, 
@@ -75,43 +96,38 @@ def compute_auc(
 
         # Compute pairwise Euclidean distance and cosine similarity
         all_embeddings_norm = all_embeddings / all_embeddings.norm(p=2, dim=1, keepdim=True)
-        euclidean_distances = torch.cdist(all_embeddings, all_embeddings, p=2)  # Euclidean distance matrix
+        euclidean_distances = -torch.cdist(all_embeddings, all_embeddings, p=2)  # Euclidean distance matrix
         cosine_similarities = torch.mm(all_embeddings_norm, all_embeddings_norm.t())  # Cosine similarity matrix
         
         # Compute labels (same id = 0, different id = 1)
-        labels = (all_ids.unsqueeze(1) == all_ids.unsqueeze(0)).int().to(device)
+        # labels = (all_ids.unsqueeze(1) == all_ids.unsqueeze(0)).int().to(device)
 
         # Flatten and filter results
-        euclidean_scores = euclidean_distances[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
-        euclidean_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
+        # euclidean_scores = euclidean_distances[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
+        # euclidean_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
         
         # cosine_scores = cosine_similarities[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
         # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
 
-        cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0])).cpu()
-        predict_class_index = all_ids[cosine_similarities.argmax(dim = -1)].unsqueeze(1).cpu().to(torch.int64)
-
-        predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
-        predict_class = predict_class.scatter_(
-            dim=1,
-            index=predict_class_index,
-            src=torch.ones_like(predict_class_index, dtype= predict_class.dtype, device = 'cpu')
+        euclidean_predict_class, euclidean_label_class = _get_predict_label_class(
+            similarity_matrix= euclidean_distances, 
+            all_ids= all_ids, 
+            num_classes= num_classes
         )
 
-        label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8, device = 'cpu')
-        label_class = label_class.scatter_(
-            dim=1, 
-            index=all_ids.unsqueeze(1).cpu().to(torch.int64),
-            src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype, device = 'cpu')
+        cosine_predict_class, cosin_label_class = _get_predict_label_class(
+            similarity_matrix= cosine_similarities, 
+            all_ids= all_ids, 
+            num_classes= num_classes
         )
 
         # Compute ROC AUC for Euclidean distance
-        all_labels['id_euclidean'] = 1 - np.array(euclidean_labels)
-        all_preds['id_euclidean'] = np.array(euclidean_scores)
+        all_labels['id_euclidean'] = euclidean_label_class.numpy()
+        all_preds['id_euclidean'] = euclidean_predict_class.numpy()
 
         # Compute ROC AUC for Cosine similarity
-        all_labels['id_cosine'] =  label_class.numpy()     # np.array(cosine_labels)
-        all_preds['id_cosine'] = predict_class.numpy()       #np.array(cosine_scores)
+        all_labels['id_cosine'] =  cosin_label_class.numpy()     # np.array(cosine_labels)
+        all_preds['id_cosine'] = cosine_predict_class.numpy()       #np.array(cosine_scores)
         # print('check shape: ', label_class.shape, predict_class.shape)
         
         # # Calculate accuracy for Euclidean distance
