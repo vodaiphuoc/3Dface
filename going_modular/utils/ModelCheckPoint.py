@@ -1,7 +1,7 @@
 import torch
 from termcolor import cprint
 import os
-
+import copy
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
@@ -10,6 +10,9 @@ from torchao.quantization import (
     quantize_,
     Int4WeightOnlyConfig,
     Int8DynamicActivationInt4WeightConfig
+)
+from torchao.quantization.qat import (
+    FromIntXQuantizationAwareTrainingConfig,
 )
 
 class ModelCheckpoint:
@@ -20,7 +23,9 @@ class ModelCheckpoint:
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
-            quantize_(model, Int8DynamicActivationInt4WeightConfig(group_size=32))
+            copied_model = copy.deepcopy(model)
+            quantize_(copied_model, FromIntXQuantizationAwareTrainingConfig())
+            quantize_(copied_model, Int8DynamicActivationInt4WeightConfig(group_size=32))
 
         checkpoint = {
             'epoch': epoch,
