@@ -6,13 +6,21 @@ import os
 seed = 42
 torch.manual_seed(seed)
 
+from torchao.quantization import (
+    quantize_,
+    Int8DynamicActivationInt4WeightConfig,
+)
+
 class ModelCheckpoint:
     def __init__(self, filepath, verbose=0):
         self.filepath = filepath
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.verbose = verbose
 
-    def __call__(self, model, optimizer, epoch):
+    def __call__(self, model, optimizer, epoch, use_quant:bool):
+        if use_quant:
+            quantize_(model, Int8DynamicActivationInt4WeightConfig(group_size=32))
+
         checkpoint = {
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
