@@ -27,7 +27,7 @@ def build(
             filename = "checkpoint.pth",
             subfolder= "normalmap/models",
         )
-        checkpoint_1 = torch.load(cache_ckpt_path1)
+        checkpoint_1 = torch.load(cache_ckpt_path1, map_location= 'cpu')
         mtl_normalmap.load_state_dict(checkpoint_1['model_state_dict'])
 
     
@@ -39,7 +39,7 @@ def build(
             filename = "checkpoint.pth",
             subfolder= "albedo/models",
         )
-        checkpoint_2 = torch.load(cache_ckpt_path2)
+        checkpoint_2 = torch.load(cache_ckpt_path2, map_location= 'cpu')
         mtl_albedo.load_state_dict(checkpoint_2['model_state_dict'])
 
     
@@ -52,7 +52,7 @@ def build(
             filename = "checkpoint.pth",
             subfolder= "depthmap/models",
         )
-        checkpoint_3 = torch.load(cache_ckpt_path3)
+        checkpoint_3 = torch.load(cache_ckpt_path3, map_location= 'cpu')
         mtl_depthmap.load_state_dict(checkpoint_3['model_state_dict'])
 
     model = ConcatMTLFaceRecognitionV3(mtl_normalmap, mtl_albedo, mtl_depthmap, config['num_classes']).to(torch.float32)
