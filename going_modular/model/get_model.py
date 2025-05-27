@@ -35,7 +35,7 @@ def build(
         checkpoint_3 = torch.load(config['checkpoint_3'])
         mtl_depthmap.load_state_dict(checkpoint_3['model_state_dict'])
 
-    model = ConcatMTLFaceRecognitionV3(mtl_normalmap, mtl_albedo, mtl_depthmap, config['num_classes'])
+    model = ConcatMTLFaceRecognitionV3(mtl_normalmap, mtl_albedo, mtl_depthmap, config['num_classes']).to(torch.float32)
 
     if config['use_quant']:
         if training:
