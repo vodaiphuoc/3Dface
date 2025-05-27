@@ -89,7 +89,7 @@ def compute_auc(
         # cosine_labels = labels[torch.triu(torch.ones_like(labels), diagonal=1) == 1].cpu().numpy()
 
         cosine_similarities = torch.diagonal_scatter(cosine_similarities, torch.tensor([-1000]*cosine_similarities.shape[0])).cpu()
-        predict_class_index = all_ids[cosine_similarities.argmax(dim = -1)].unsqueeze(1).cpu()
+        predict_class_index = all_ids[cosine_similarities.argmax(dim = -1)].unsqueeze(1).cpu().to(torch.int64)
 
         predict_class = torch.zeros((predict_class_index.shape[0], num_classes), dtype= torch.int8,device = 'cpu')
         predict_class = predict_class.scatter_(
@@ -101,7 +101,7 @@ def compute_auc(
         label_class = torch.zeros((all_ids.shape[0], num_classes),dtype= torch.int8, device = 'cpu')
         label_class = label_class.scatter_(
             dim=1, 
-            index=all_ids.unsqueeze(1).cpu(),
+            index=all_ids.unsqueeze(1).cpu().to(torch.int64),
             src=torch.ones_like(all_ids.unsqueeze(1), dtype= label_class.dtype, device = 'cpu')
         )
 
