@@ -40,11 +40,12 @@ def build(
             subfolder= "albedo/models",
         )
         checkpoint_2 = torch.load(cache_ckpt_path2, map_location= 'cpu')
-        mtl_albedo.load_state_dict(checkpoint_2['model_state_dict'])
-
+        try:
+            mtl_albedo.load_state_dict(checkpoint_2['model_state_dict'])
+        except Exception as e:
+            print('error loading state dict albedo')
     
     mtl_depthmap = MTLFaceRecognition(config['backbone'], config['num_classes'])
-    
     if load_checkpoint:
         cache_ckpt_path3 = hf_hub_download(
             "Daiphuoc/3DFaceCheckpoints", 
