@@ -23,7 +23,7 @@ class LogitsOutputs(ModelOutput):
     pose: torch.Tensor = None
     emotion: torch.Tensor = None
     gender: torch.Tensor = None
-    id: Union[torch.Tensor, Tuple[torch.Tensor]]
+    id: Union[torch.Tensor, Tuple[torch.Tensor]] = None
 
 @dataclasses.dataclass
 class MTLFaceForConcatEmbeddingsOutputs(ModelOutput):
