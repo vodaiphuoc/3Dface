@@ -55,7 +55,7 @@ def compute_auc(
             outputs: ConcatMTLFaceRecognitionV3Outputs = model(images, return_id_embedding = True)
 
             x_id = outputs.id_embedding
-            x_gender, x_pose, x_emotion, x_facial_hair, x_spectacles = outputs.logits.to_tuple()
+            x_spectacles, x_facial_hair, x_pose, x_emotion, x_gender, _  = outputs.logits.to_tuple()
 
             # Append IDs and embeddings
             embeddings_list.append((id, x_id))
