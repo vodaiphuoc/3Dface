@@ -78,8 +78,7 @@ class IdRecognitionModule(nn.Module):
         if for_concat_model:
             self.id_embedding = nn.Sequential(
                 nn.BatchNorm1d(in_features),
-                nn.AdaptiveAvgPool2d((1, 1)),
-                nn.Flatten(),
+                nn.Linear(in_features, in_features)
             )
         else:
             self.id_embedding = nn.Sequential(
