@@ -18,11 +18,11 @@ class HeadOutputs(ModelOutput):
 
 @dataclasses.dataclass
 class LogitsOutputs(ModelOutput):
-    spectacles: torch.Tensor
-    facial_hair: torch.Tensor
-    pose: torch.Tensor
-    emotion: torch.Tensor
-    gender: torch.Tensor
+    spectacles: torch.Tensor = None
+    facial_hair: torch.Tensor = None
+    pose: torch.Tensor = None
+    emotion: torch.Tensor = None
+    gender: torch.Tensor = None
     id: Union[torch.Tensor, Tuple[torch.Tensor]]
 
 @dataclasses.dataclass
