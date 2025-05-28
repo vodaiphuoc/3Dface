@@ -4,6 +4,7 @@ from torch import nn
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
+from ..modeling_output import HeadOutputs
 
 class SpectacleDetectModule(nn.Module):
     def __init__(self):
@@ -16,7 +17,10 @@ class SpectacleDetectModule(nn.Module):
         )
         self.spectacle_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_spectacle):
-        x_spectacle = self.spectacle_embedding(x_spectacle)
-        x_spectacle = self.spectacle_linear(x_spectacle)
-        return x_spectacle
+    def forward(self, x_spectacle, return_embedding: bool)->HeadOutputs:
+        x_spectacle_embedding = self.spectacle_embedding(x_spectacle)
+        x_spectacle = self.spectacle_linear(x_spectacle_embedding)
+        return HeadOutputs(
+            logits= x_spectacle,
+            embedding= x_spectacle_embedding if return_embedding else None
+        )

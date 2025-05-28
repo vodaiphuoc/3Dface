@@ -5,6 +5,8 @@ from torch import nn
 seed = 42
 torch.manual_seed(seed)
 
+from ..modeling_output import HeadOutputs
+
 class EmotionDetectModule(nn.Module):
     def __init__(self):
         super(EmotionDetectModule, self).__init__()
@@ -16,7 +18,10 @@ class EmotionDetectModule(nn.Module):
         )
         self.emotion_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_emotion):
-        x_emotion = self.emotion_embedding(x_emotion)
-        x_emotion = self.emotion_linear(x_emotion)
-        return x_emotion
+    def forward(self, x_emotion, return_embedding: bool)->HeadOutputs:
+        x_emotion_embedding = self.emotion_embedding(x_emotion)
+        x_emotion = self.emotion_linear(x_emotion_embedding)
+        return HeadOutputs(
+            logits= x_emotion,
+            embedding= x_emotion_embedding if return_embedding else None
+        )

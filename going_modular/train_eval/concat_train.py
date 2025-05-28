@@ -10,10 +10,12 @@ from ..utils.MultiMetricEarlyStopping import MultiMetricEarlyStopping
 from ..utils.ModelCheckPoint import ModelCheckpoint
 import os
 
+from ..model.modeling_output import ConcatMTLFaceRecognitionV3Outputs
+from ..model.ConcatMTLFaceRecognition import ConcatMTLFaceRecognitionV3
+
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
-
 
 def fit(
     conf: dict,
@@ -168,7 +170,7 @@ def fit(
     
 def train_epoch(
     train_dataloader: DataLoader, 
-    model: Module, 
+    model: ConcatMTLFaceRecognitionV3, 
     criterion: Module, 
     optimizer: Optimizer, 
     device: str,
@@ -192,7 +194,15 @@ def train_epoch(
 
         optimizer.zero_grad()
 
-        logits = model(X)
+        outputs: ConcatMTLFaceRecognitionV3Outputs = model(X)
+
+        # flatten all logits
+        logits = ()
+        for ele in outputs.logits.to_tuple():
+            if isinstance(ele, tuple):
+                logits += ele
+            else:
+                logits += (ele,)
 
         (
             total_loss, 
@@ -260,7 +270,15 @@ def test_epoch(
             X = X.to(device)
             y = y.to(device)
 
-            logits = model(X)
+                
+            outputs: ConcatMTLFaceRecognitionV3Outputs = model(X)
+
+            logits = ()
+            for ele in outputs.logits.to_tuple():
+                if isinstance(ele, tuple):
+                    logits += ele
+                else:
+                    logits += (ele,)
 
             (
                 total_loss, 

@@ -8,6 +8,8 @@ import math
 seed = 42
 torch.manual_seed(seed)
 
+from ..modeling_output import HeadOutputs
+
 class MagLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, easy_margin=True, l_margin=0.45, u_margin=0.8, l_a=10, u_a=110):
         super(MagLinear, self).__init__()
@@ -70,19 +72,21 @@ class MagLinear(torch.nn.Module):
         # cos_theta chính là accuracy, nó đo cosine similarity giữa vector tâm và feature vector.
         return [cos_theta, cos_theta_m], x_norm
  
-    
 class IdRecognitionModule(nn.Module):
-    def __init__(self, num_classes):
-        super(IdRecognitionModule, self).__init__()
+    def __init__(self, in_features:int = 512, num_classes:int = 262):
+        super().__init__()
         self.id_embedding = nn.Sequential(
-            nn.BatchNorm2d(512),
+            nn.BatchNorm2d(in_features),
             nn.AdaptiveAvgPool2d((1, 1)),
             nn.Flatten(),
         )
-        self.maglinear = MagLinear(512, num_classes)
+        self.maglinear = MagLinear(in_features, num_classes)
 
-    def forward(self, x_id):
-        x_id = self.id_embedding(x_id)
-        logits, x_norm = self.maglinear(x_id)
-        return logits, x_norm
+    def forward(self, x_id: torch.Tensor, return_embedding:bool)->HeadOutputs:
+        x_id_embedding = self.id_embedding(x_id)
+        logits, x_norm = self.maglinear(x_id_embedding)
+        return HeadOutputs(
+            logits= (logits, x_norm),
+            embedding= x_id_embedding if return_embedding else None
+        ) 
     

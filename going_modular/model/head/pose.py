@@ -4,6 +4,7 @@ from torch import nn
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
+from ..modeling_output import HeadOutputs
 
 class PoseDetectModule(nn.Module):
     def __init__(self):
@@ -16,7 +17,10 @@ class PoseDetectModule(nn.Module):
         )
         self.pose_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_pose):
-        x_pose = self.pose_embedding(x_pose)
-        x_pose = self.pose_linear(x_pose)
-        return x_pose
+    def forward(self, x_pose, return_embedding: bool)->HeadOutputs:
+        x_pose_embeding = self.pose_embedding(x_pose)
+        x_pose = self.pose_linear(x_pose_embeding)
+        return HeadOutputs(
+            logits=x_pose,
+            embedding= x_pose_embeding if return_embedding else None
+        )

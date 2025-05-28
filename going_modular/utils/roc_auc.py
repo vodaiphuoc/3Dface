@@ -6,6 +6,8 @@ from sklearn.metrics import roc_auc_score
 seed = 42
 torch.manual_seed(seed)
 
+from ..model.modeling_output import ConcatMTLFaceRecognitionV3Outputs
+from ..model.ConcatMTLFaceRecognition import ConcatMTLFaceRecognitionV3
 
 def _get_predict_label_class(similarity_matrix: torch.Tensor, all_ids: torch.Tensor, num_classes:int):
     similarity_matrix = torch.diagonal_scatter(similarity_matrix, torch.tensor([-1000]*similarity_matrix.shape[0])).cpu()
@@ -29,7 +31,7 @@ def _get_predict_label_class(similarity_matrix: torch.Tensor, all_ids: torch.Ten
 
 def compute_auc(
     dataloader: torch.utils.data.DataLoader, 
-    model: torch.nn.Module, 
+    model: ConcatMTLFaceRecognitionV3, 
     device: str,
     num_classes:int
 ):
@@ -50,7 +52,10 @@ def compute_auc(
             
             images = images.to(device)
             # Trừ id, còn lại đều đã qua softmax
-            x_id, x_gender, x_pose, x_emotion, x_facial_hair, x_spectacles = model.get_result(images)
+            outputs: ConcatMTLFaceRecognitionV3Outputs = model(images, return_id_embedding = True)
+
+            x_id = outputs.id_embedding
+            x_gender, x_pose, x_emotion, x_facial_hair, x_spectacles = outputs.logits.to_tuple()
 
             # Append IDs and embeddings
             embeddings_list.append((id, x_id))

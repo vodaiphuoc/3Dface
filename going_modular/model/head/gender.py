@@ -5,6 +5,8 @@ from torch import nn
 seed = 42
 torch.manual_seed(seed)
 
+from ..modeling_output import HeadOutputs
+
 class GenderDetectModule(nn.Module):
     def __init__(self):
         super(GenderDetectModule, self).__init__()
@@ -16,7 +18,10 @@ class GenderDetectModule(nn.Module):
         )
         self.gender_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_gender):
-        x_gender = self.gender_embedding(x_gender)
-        x_gender = self.gender_linear(x_gender)
-        return x_gender
+    def forward(self, x_gender, return_embedding: bool)->HeadOutputs:
+        x_gender_embedding = self.gender_embedding(x_gender)
+        x_gender = self.gender_linear(x_gender_embedding)
+        return HeadOutputs(
+            logits= x_gender,
+            embedding= x_gender_embedding if return_embedding else None
+        )
