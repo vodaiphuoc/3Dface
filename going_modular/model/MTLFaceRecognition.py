@@ -32,7 +32,7 @@ from .modeling_output import (
 
 class MTLFaceRecognitionForConcat(torch.nn.Module):
     def __init__(self, backbone: BACKBONE_TYPES, num_classes:int):
-        super(MTLFaceRecognition, self).__init__()
+        super().__init__()
         self.backbone = create_miresnet(backbone)
         
         # Head
