@@ -31,6 +31,7 @@ MAPTYPE_KEYS = Literal[
 ]
 
 BACKBONE_FREEZE = Literal[
+    'no',
     "all",
     "layer1",
     "layer2",
@@ -103,6 +104,9 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         if freeze_options == "all":
             for prams in self.backbone.parameters():
                 prams.requires_grad = False
+        elif freeze_options == 'no':
+            for prams in self.backbone.parameters():
+                prams.requires_grad = True
         else:
             freeze_layer_names = []
             for name, sub_module in self.backbone.named_modules():

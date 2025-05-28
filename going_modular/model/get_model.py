@@ -49,6 +49,7 @@ def build(
 
     if config['use_quant']:
         if training:
+            print('add quant')
             activation_config = FakeQuantizeConfig(torch.int8, "per_token", is_symmetric=False)
             weight_config = FakeQuantizeConfig(torch.int4, group_size=32)
             quantize_(
