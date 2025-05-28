@@ -33,7 +33,8 @@ class ModelCheckpoint:
             'optimizer_state_dict': optimizer.state_dict(),
         }
 
-        torch.save(checkpoint, self.filepath)
+        os.makedirs(os.path.join(os.path.dirname(self.filepath),str(epoch)), exist_ok=True)
+        torch.save(checkpoint, self.filepath.replace('checkpoint.pth',f'{epoch}/checkpoint.pth'))
         if self.verbose > 0:
             cprint(f"\tSaving model and optimizer state to {self.filepath}", 'cyan')
 

@@ -76,9 +76,9 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         }
         try:
             self.backbone.load_state_dict(backbone_state_dict)
-            print('success in loading ckpt for backbone')
+            print(f'success in loading ckpt {mapkey} for backbone')
         except Exception as e:
-            print('error in loading ckpt for backbone')
+            print(f'error in loading ckpt {mapkey} for backbone')
         
     def forward(self, x, return_embedding:bool)->MTLFaceForConcatOutputs:
         (
