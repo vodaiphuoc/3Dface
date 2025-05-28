@@ -58,4 +58,4 @@ def build(
         else:
             quantize_(model, Int8DynamicActivationInt4WeightConfig(group_size= 32))
     
-    return torch.compile(model, backend= "inductor", mode="default")
+    return model
