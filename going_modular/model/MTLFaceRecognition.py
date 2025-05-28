@@ -23,6 +23,13 @@ BACKBONE_TYPES = Literal[
     'miresnet101', 
     'miresnet152'
 ]
+
+MAPTYPE_KEYS = Literal[
+    "normalmap",
+    "albedo",
+    "depthmap"
+]
+
 from .modeling_output import (
     MTLFaceForConcatOutputs,
     LogitsOutputs,
@@ -30,8 +37,16 @@ from .modeling_output import (
     HeadOutputs
 )
 
+from huggingface_hub import hf_hub_download
+
 class MTLFaceRecognitionForConcat(torch.nn.Module):
-    def __init__(self, backbone: BACKBONE_TYPES, num_classes:int):
+    def __init__(
+            self, 
+            backbone: BACKBONE_TYPES, 
+            num_classes:int,
+            load_checkpoint:bool,
+            mapkey: MAPTYPE_KEYS
+        ):
         super().__init__()
         self.backbone = create_miresnet(backbone)
         
@@ -42,6 +57,28 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         self.facial_hair_head = FacialHairDetectModule()
         self.pose_head = PoseDetectModule()
         self.spectacles_head = SpectacleDetectModule()
+
+        if load_checkpoint:
+            self._load_backbone_ckpt(mapkey)
+    
+    def _load_backbone_ckpt(self, mapkey: MAPTYPE_KEYS):
+        cache_ckpt_path = hf_hub_download(
+            "Daiphuoc/3DFaceCheckpoints", 
+            repo_type="model",
+            filename = "checkpoint.pth",
+            subfolder= f"{mapkey}/models",
+        )
+        ckpt = torch.load(cache_ckpt_path, map_location= 'cpu')
+        backbone_state_dict = {
+            k.replace('backbone.',''):v 
+            for k,v in ckpt['model_state_dict'].items()
+            if "backbone" in k
+        }
+        try:
+            self.backbone.load_state_dict(backbone_state_dict)
+            print('success in loading ckpt for backbone')
+        except Exception as e:
+            print('error in loading ckpt for backbone')
         
     def forward(self, x, return_embedding:bool)->MTLFaceForConcatOutputs:
         (
