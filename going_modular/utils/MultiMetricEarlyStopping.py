@@ -6,19 +6,15 @@ seed = 42
 torch.manual_seed(seed)
 import copy
 
-from torchao.quantization import (
-    quantize_,
-    Int4WeightOnlyConfig,
-    Int8DynamicActivationInt4WeightConfig
-)
-from torchao.quantization.qat import (
-    FromIntXQuantizationAwareTrainingConfig,
-)
 
+from torchao.quantization.qat import (
+    Int8DynActInt4WeightQATQuantizer
+)
 
 class MultiMetricEarlyStopping:
     def __init__(
         self,
+        quantizer: Int8DynActInt4WeightQATQuantizer,
         min_delta=0,
         patience=0,
         verbose=0,
@@ -45,6 +41,7 @@ class MultiMetricEarlyStopping:
         self.monitor_keys = monitor_keys or []
         self.start_from_epoch = start_from_epoch
         self.save_dir = save_dir
+        self.quantizer = quantizer
 
         if mode not in ['min', 'max']:
             raise ValueError(f"Invalid mode '{mode}', must be 'min' or 'max'.")
@@ -99,14 +96,12 @@ class MultiMetricEarlyStopping:
                     
                     if use_quant:
                         copied_model = copy.deepcopy(model)
-                        quantize_(copied_model, FromIntXQuantizationAwareTrainingConfig())
-                        quantize_(copied_model, Int8DynamicActivationInt4WeightConfig(group_size=32))
-                        save_model = copied_model
+                        save_model = self.quantizer.convert(copied_model)
                     else:
                         save_model = copy.deepcopy(model)
 
                     save_path = os.path.join(self.save_dir, f"best_{key}_{epoch}.pth")
-                    torch.save(save_model.state_dict(), save_path)
+                    torch.save(save_model, save_path)
                     # self.__update_best_epoch_info(key, epoch)
                     if self.verbose:
                         print(f"\tSaved best model weights for '{key}' at epoch {epoch} to '{save_path}'", 'green')

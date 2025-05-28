@@ -20,7 +20,7 @@ torch.manual_seed(seed)
 def fit(
     conf: dict,
     start_epoch: int,
-    model: Module,
+    model: ConcatMTLFaceRecognitionV3,
     train_dataloader: DataLoader,
     test_dataloader: DataLoader,
     criterion: Module,
@@ -158,6 +158,7 @@ def fit(
 
         if epoch%25 == 0 or epoch == conf['epochs']-1: 
             model_checkpoint(model, optimizer, epoch + 1, use_quant = conf['use_quant'])
+        
         early_stopping([test_id_cosine_auc, test_id_euclidean_auc], model, epoch + 1, use_quant = conf['use_quant'])
         
         # if early_max_stopping.early_stop and early_min_stopping.early_stop:

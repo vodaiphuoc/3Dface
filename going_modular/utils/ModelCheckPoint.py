@@ -1,44 +1,37 @@
 import torch
-from termcolor import cprint
 import os
 import copy
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
 
-from torchao.quantization import (
-    quantize_,
-    Int4WeightOnlyConfig,
-    Int8DynamicActivationInt4WeightConfig
-)
+
 from torchao.quantization.qat import (
-    FromIntXQuantizationAwareTrainingConfig,
+    Int8DynActInt4WeightQATQuantizer
 )
 
 class ModelCheckpoint:
-    def __init__(self, filepath, verbose=0):
+    def __init__(self, 
+                 filepath, 
+                 quantizer: Int8DynActInt4WeightQATQuantizer,
+                 verbose=0
+        ):
         self.filepath = filepath
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.verbose = verbose
+        self.quantizer = quantizer
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
             copied_model = copy.deepcopy(model)
-            quantize_(copied_model, FromIntXQuantizationAwareTrainingConfig())
-            quantize_(copied_model, Int8DynamicActivationInt4WeightConfig(group_size=32))
-            save_model = copied_model
+            save_model = self.quantizer.convert(copied_model)
         else:
             save_model = copy.deepcopy(model)
-        checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': save_model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-        }
 
         os.makedirs(os.path.join(os.path.dirname(self.filepath),str(epoch)), exist_ok=True)
-        torch.save(checkpoint, self.filepath.replace('checkpoint.pth',f'{epoch}/checkpoint.pth'))
+        torch.save(save_model, self.filepath.replace('checkpoint.pth',f'{epoch}/checkpoint.pth'))
         if self.verbose > 0:
-            cprint(f"\tSaving model and optimizer state to {self.filepath}", 'cyan')
+            print(f"\tSaving model and optimizer state to {self.filepath}")
 
     def load_checkpoint(self, model, optimizer, scheduler):
         """
@@ -55,8 +48,8 @@ class ModelCheckpoint:
             epoch = checkpoint['epoch']
 
             if self.verbose > 0:
-                cprint(f"\tLoaded model and optimizer state from {self.filepath}", 'cyan')
-                cprint(f"\tResuming from epoch {epoch}", 'cyan')
+                print(f"\tLoaded model and optimizer state from {self.filepath}")
+                print(f"\tResuming from epoch {epoch}")
         else:
             if self.verbose > 0:
-                cprint(f"\tNo checkpoint found at {self.filepath}. Starting from scratch.", 'red')
+                print(f"\tNo checkpoint found at {self.filepath}. Starting from scratch.", 'red')
