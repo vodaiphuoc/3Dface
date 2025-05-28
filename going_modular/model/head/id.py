@@ -73,13 +73,20 @@ class MagLinear(torch.nn.Module):
         return [cos_theta, cos_theta_m], x_norm
  
 class IdRecognitionModule(nn.Module):
-    def __init__(self, in_features:int = 512, num_classes:int = 262):
+    def __init__(self, in_features:int = 512, num_classes:int = 262,for_concat_model: bool = False):
         super().__init__()
-        self.id_embedding = nn.Sequential(
-            nn.BatchNorm2d(in_features),
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-        )
+        if for_concat_model:
+            self.id_embedding = nn.Sequential(
+                nn.BatchNorm1d(in_features),
+                nn.AdaptiveAvgPool2d((1, 1)),
+                nn.Flatten(),
+            )
+        else:
+            self.id_embedding = nn.Sequential(
+                nn.BatchNorm2d(in_features),
+                nn.AdaptiveAvgPool2d((1, 1)),
+                nn.Flatten(),
+            )
         self.maglinear = MagLinear(in_features, num_classes)
 
     def forward(self, x_id: torch.Tensor, return_embedding:bool)->HeadOutputs:

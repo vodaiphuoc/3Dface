@@ -29,7 +29,11 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
         self.mtl_depthmap = mtl_depthmap
        
         # concat head
-        self.id_head = IdRecognitionModule(1536, num_classes)
+        self.id_head = IdRecognitionModule(
+            1536, 
+            num_classes,
+            for_concat_model = True
+        )
         self.gender_head = Linear(1536, 2)
         self.emotion_head = Linear(1536, 2)
         self.facial_hair_head = Linear(1536, 2)
