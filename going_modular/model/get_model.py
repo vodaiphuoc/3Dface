@@ -45,7 +45,7 @@ def build(
         mtl_albedo, 
         mtl_depthmap, 
         config['num_classes']
-    ).to(torch.float32)
+    )
 
     if config['use_quant']:
         if training:

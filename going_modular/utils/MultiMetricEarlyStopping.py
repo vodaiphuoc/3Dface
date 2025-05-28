@@ -1,10 +1,20 @@
 import os
 import torch
-from termcolor import cprint
 
 # Đặt seed toàn cục
 seed = 42
 torch.manual_seed(seed)
+import copy
+
+from torchao.quantization import (
+    quantize_,
+    Int4WeightOnlyConfig,
+    Int8DynamicActivationInt4WeightConfig
+)
+from torchao.quantization.qat import (
+    FromIntXQuantizationAwareTrainingConfig,
+)
+
 
 class MultiMetricEarlyStopping:
     def __init__(
@@ -60,7 +70,7 @@ class MultiMetricEarlyStopping:
         
         self.best_info_file = os.path.join(self.save_dir, 'best_epoch.yaml')
 
-    def __call__(self, current_values, model, epoch):
+    def __call__(self, current_values, model, epoch, use_quant:bool):
         if epoch < self.start_from_epoch:
             return
         
@@ -86,16 +96,24 @@ class MultiMetricEarlyStopping:
                     existing_files = [f for f in os.listdir(self.save_dir) if f.startswith(f"best_{key}_")]
                     for file in existing_files:
                         os.remove(os.path.join(self.save_dir, file))
-                            
+                    
+                    if use_quant:
+                        copied_model = copy.deepcopy(model)
+                        quantize_(copied_model, FromIntXQuantizationAwareTrainingConfig())
+                        quantize_(copied_model, Int8DynamicActivationInt4WeightConfig(group_size=32))
+                        save_model = copied_model
+                    else:
+                        save_model = copy.deepcopy(model)
+
                     save_path = os.path.join(self.save_dir, f"best_{key}_{epoch}.pth")
-                    torch.save(model.state_dict(), save_path)
+                    torch.save(save_model.state_dict(), save_path)
                     # self.__update_best_epoch_info(key, epoch)
                     if self.verbose:
-                        cprint(f"\tSaved best model weights for '{key}' at epoch {epoch} to '{save_path}'", 'green')
+                        print(f"\tSaved best model weights for '{key}' at epoch {epoch} to '{save_path}'", 'green')
             else:
                 self.counters[key] += 1
                 if self.verbose:
-                    cprint(f"\tEpoch {epoch}: EarlyStopping counter for '{key}': {self.counters[key]}/{self.patience}", 'light_red')
+                    print(f"\tEpoch {epoch}: EarlyStopping counter for '{key}': {self.counters[key]}/{self.patience}", 'light_red')
 
             # Check if patience exceeded for this metric
             if self.counters[key] < self.patience:
@@ -103,5 +121,5 @@ class MultiMetricEarlyStopping:
 
         if all_metrics_stalled:
             if self.verbose:
-                cprint(f"\tEarly stopping triggered at epoch {epoch} as all metrics exceeded patience.", 'red')
+                print(f"\tEarly stopping triggered at epoch {epoch} as all metrics exceeded patience.", 'red')
             self.early_stop = True
