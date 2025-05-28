@@ -30,6 +30,14 @@ MAPTYPE_KEYS = Literal[
     "depthmap"
 ]
 
+BACKBONE_FREEZE = Literal[
+    "all",
+    "layer1",
+    "layer2",
+    "layer3",
+    "layer4"
+]
+
 from .modeling_output import (
     MTLFaceForConcatOutputs,
     LogitsOutputs,
@@ -45,7 +53,8 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             backbone: BACKBONE_TYPES, 
             num_classes:int,
             load_checkpoint:bool,
-            mapkey: MAPTYPE_KEYS
+            mapkey: MAPTYPE_KEYS,
+            freeze_options: BACKBONE_FREEZE
         ):
         super().__init__()
         self.backbone = create_miresnet(backbone)
@@ -60,6 +69,8 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
 
         if load_checkpoint:
             self._load_backbone_ckpt(mapkey)
+
+        self._freeze_layers(freeze_options)
     
     def _load_backbone_ckpt(self, mapkey: MAPTYPE_KEYS):
         cache_ckpt_path = hf_hub_download(
@@ -79,7 +90,37 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             print(f'success in loading ckpt {mapkey} for backbone')
         except Exception as e:
             print(f'error in loading ckpt {mapkey} for backbone')
-        
+            try:
+                self.backbone.load_state_dict(backbone_state_dict,strict= False)
+                print(f'success in re-load ckpt {mapkey} for backbone with strict is False')
+            except Exception as e:
+                print(f'error in re-load ckpt {mapkey} for backbone with strict is False')
+    
+    def _freeze_layers(self, freeze_options: BACKBONE_FREEZE):
+        r"""
+        Freeze layers in backbone
+        """
+        if freeze_options == "all":
+            for prams in self.backbone.parameters():
+                prams.requires_grad = False
+        else:
+            freeze_layer_names = []
+            for name, sub_module in self.backbone.named_modules():
+                if freeze_options[:-1] + str(int(freeze_options[-1]) + 1) in name:
+                    break
+                elif "avgpool" in name:
+                    break
+                else:
+                    freeze_layer_names.append(name)
+
+            for name, sub_module in self.backbone.named_modules():
+                if name in freeze_layer_names:
+                    for prams in sub_module.parameters():
+                        prams.requires_grad = False
+                else:
+                    for prams in sub_module.parameters():
+                        prams.requires_grad = True
+
     def forward(self, x, return_embedding:bool)->MTLFaceForConcatOutputs:
         (
             (x_spectacles, x_non_spectacles),

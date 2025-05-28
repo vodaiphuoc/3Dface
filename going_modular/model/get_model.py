@@ -20,21 +20,24 @@ def build(
         backbone= config['backbone'], 
         num_classes= config['num_classes'],
         load_checkpoint= load_checkpoint,
-        mapkey="normalmap"
+        mapkey="normalmap",
+        freeze_options=config['freeze_options']
     )
     
     mtl_albedo = MTLFaceRecognitionForConcat(
         backbone= config['backbone'], 
         num_classes= config['num_classes'],
         load_checkpoint= load_checkpoint,
-        mapkey= "albedo"
+        mapkey= "albedo",
+        freeze_options=config['freeze_options']
     )
     
     mtl_depthmap = MTLFaceRecognitionForConcat(
         backbone= config['backbone'], 
         num_classes= config['num_classes'],
         load_checkpoint= load_checkpoint,
-        mapkey= "depthmap"
+        mapkey= "depthmap",
+        freeze_options=config['freeze_options']
     )
     
     model = ConcatMTLFaceRecognitionV3(
