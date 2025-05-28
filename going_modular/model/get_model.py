@@ -1,4 +1,4 @@
-from .MTLFaceRecognition import MTLFaceRecognition
+from .MTLFaceRecognition import MTLFaceRecognition, MTLFaceRecognitionForConcat
 from .ConcatMTLFaceRecognition import ConcatMTLFaceRecognitionV3
 import torch
 from torchao.quantization import (
@@ -19,7 +19,7 @@ def build(
         training:bool = True
     ):
     
-    mtl_normalmap = MTLFaceRecognition(config['backbone'], config['num_classes'])
+    mtl_normalmap = MTLFaceRecognitionForConcat(config['backbone'], config['num_classes'])
     if load_checkpoint:
         cache_ckpt_path1 = hf_hub_download(
             "Daiphuoc/3DFaceCheckpoints", 
@@ -31,7 +31,7 @@ def build(
         mtl_normalmap.load_state_dict(checkpoint_1['model_state_dict'])
 
     
-    mtl_albedo = MTLFaceRecognition(config['backbone'], config['num_classes'])
+    mtl_albedo = MTLFaceRecognitionForConcat(config['backbone'], config['num_classes'])
     if load_checkpoint:
         cache_ckpt_path2 = hf_hub_download(
             "Daiphuoc/3DFaceCheckpoints", 
@@ -45,7 +45,7 @@ def build(
         except Exception as e:
             print('error loading state dict albedo')
     
-    mtl_depthmap = MTLFaceRecognition(config['backbone'], config['num_classes'])
+    mtl_depthmap = MTLFaceRecognitionForConcat(config['backbone'], config['num_classes'])
     if load_checkpoint:
         cache_ckpt_path3 = hf_hub_download(
             "Daiphuoc/3DFaceCheckpoints", 
