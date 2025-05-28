@@ -26,10 +26,12 @@ class ModelCheckpoint:
             copied_model = copy.deepcopy(model)
             quantize_(copied_model, FromIntXQuantizationAwareTrainingConfig())
             quantize_(copied_model, Int8DynamicActivationInt4WeightConfig(group_size=32))
-
+            save_model = copied_model
+        else:
+            save_model = copy.deepcopy(model)
         checkpoint = {
             'epoch': epoch,
-            'model_state_dict': model.state_dict(),
+            'model_state_dict': save_model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
         }
 
