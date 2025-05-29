@@ -23,7 +23,7 @@ class QuantConcatMTLFaceRecognitionV3(torch.nn.Module):
 def build(
         config: dict, 
         load_checkpoint:bool = False,
-        training:bool = True
+        device: torch.device = torch.device('cuda')
     )->Union[ConcatMTLFaceRecognitionV3, QuantConcatMTLFaceRecognitionV3]:
     
     mtl_normalmap = MTLFaceRecognitionForConcat(
@@ -58,8 +58,7 @@ def build(
             config['num_classes']
         )
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
-        model = torch.ao.quantization.prepare_qat(model.train())
-        print(model)
+        model = torch.ao.quantization.prepare_qat(model.train().to(device))
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(
