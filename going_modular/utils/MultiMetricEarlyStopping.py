@@ -93,7 +93,7 @@ class MultiMetricEarlyStopping:
                         os.remove(os.path.join(self.save_dir, file))
                     
                     if use_quant:
-                        copied_model = copy.deepcopy(model)
+                        copied_model = copy.deepcopy(model).to('cpu')
                         copied_model.eval()
                         save_model = torch.ao.quantization.convert(copied_model)
                     else:
