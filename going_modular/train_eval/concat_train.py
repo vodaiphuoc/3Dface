@@ -55,23 +55,23 @@ def fit(
             test_loss_spectacles,
         ) = test_epoch(test_dataloader, model, criterion, device)
         
-        # train_auc = compute_auc(train_dataloader, model, device, conf["num_classes"])
-        # train_gender_auc = train_auc['gender']
-        # train_spectacles_auc = train_auc['spectacles']
-        # train_facial_hair_auc = train_auc['facial_hair']
-        # train_pose_auc = train_auc['pose']
-        # train_emotion_auc = train_auc['emotion']
-        # train_id_cosine_auc = train_auc['id_cosine']
-        # train_id_euclidean_auc = train_auc['id_euclidean']
+        train_auc = compute_auc(train_dataloader, model, device, conf["num_classes"])
+        train_gender_auc = train_auc['gender']
+        train_spectacles_auc = train_auc['spectacles']
+        train_facial_hair_auc = train_auc['facial_hair']
+        train_pose_auc = train_auc['pose']
+        train_emotion_auc = train_auc['emotion']
+        train_id_cosine_auc = train_auc['id_cosine']
+        train_id_euclidean_auc = train_auc['id_euclidean']
         
-        # test_auc = compute_auc(test_dataloader, model, device, conf["num_classes_test"])
-        # test_gender_auc = test_auc['gender']
-        # test_spectacles_auc = test_auc['spectacles']
-        # test_facial_hair_auc = test_auc['facial_hair']
-        # test_pose_auc = test_auc['pose']
-        # test_emotion_auc = test_auc['emotion']
-        # test_id_cosine_auc = test_auc['id_cosine']
-        # test_id_euclidean_auc = test_auc['id_euclidean']
+        test_auc = compute_auc(test_dataloader, model, device, conf["num_classes_test"])
+        test_gender_auc = test_auc['gender']
+        test_spectacles_auc = test_auc['spectacles']
+        test_facial_hair_auc = test_auc['facial_hair']
+        test_pose_auc = test_auc['pose']
+        test_emotion_auc = test_auc['emotion']
+        test_id_cosine_auc = test_auc['id_cosine']
+        test_id_euclidean_auc = test_auc['id_euclidean']
         
         # Log các giá trị vào TensorBoard
         writer.add_scalars(main_tag='Loss/train', tag_scalar_dict={
@@ -92,26 +92,26 @@ def fit(
         writer.add_scalars(main_tag='Loss/emotion', tag_scalar_dict={
             'train': train_loss_emotion, 'test': test_loss_emotion}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/cosine', tag_scalar_dict={
-        #     'train': train_id_cosine_auc, 'test': test_id_cosine_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/cosine', tag_scalar_dict={
+            'train': train_id_cosine_auc, 'test': test_id_cosine_auc}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/euclidean', tag_scalar_dict={
-        #     'train': train_id_euclidean_auc, 'test': test_id_euclidean_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/euclidean', tag_scalar_dict={
+            'train': train_id_euclidean_auc, 'test': test_id_euclidean_auc}, global_step=epoch+1)
 
-        # writer.add_scalars(main_tag='AUC/gender', tag_scalar_dict={
-        #     'train': train_gender_auc, 'test': test_gender_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/gender', tag_scalar_dict={
+            'train': train_gender_auc, 'test': test_gender_auc}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/spectacles', tag_scalar_dict={
-        #     'train': train_spectacles_auc, 'test': test_spectacles_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/spectacles', tag_scalar_dict={
+            'train': train_spectacles_auc, 'test': test_spectacles_auc}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/facial_hair', tag_scalar_dict={
-        #     'train': train_facial_hair_auc, 'test': test_facial_hair_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/facial_hair', tag_scalar_dict={
+            'train': train_facial_hair_auc, 'test': test_facial_hair_auc}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/pose', tag_scalar_dict={
-        #     'train': train_pose_auc, 'test': test_pose_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/pose', tag_scalar_dict={
+            'train': train_pose_auc, 'test': test_pose_auc}, global_step=epoch+1)
         
-        # writer.add_scalars(main_tag='AUC/emotion', tag_scalar_dict={
-        #     'train': train_emotion_auc, 'test': test_emotion_auc}, global_step=epoch+1)
+        writer.add_scalars(main_tag='AUC/emotion', tag_scalar_dict={
+            'train': train_emotion_auc, 'test': test_emotion_auc}, global_step=epoch+1)
         
         train_metrics = {
             "loss": train_loss,
@@ -121,13 +121,13 @@ def fit(
             "loss_pose": train_loss_pose,
             "loss_facial_hair": train_loss_facial_hair,
             "loss_spectacles": train_loss_spectacles,
-            # "auc_gender": train_gender_auc,
-            # "auc_spectacles": train_spectacles_auc,
-            # "auc_facial_hair": train_facial_hair_auc,
-            # "auc_pose": train_pose_auc,
-            # "auc_emotion": train_emotion_auc,
-            # "auc_id_cosine": train_id_cosine_auc,
-            # "auc_id_euclidean": train_id_euclidean_auc,
+            "auc_gender": train_gender_auc,
+            "auc_spectacles": train_spectacles_auc,
+            "auc_facial_hair": train_facial_hair_auc,
+            "auc_pose": train_pose_auc,
+            "auc_emotion": train_emotion_auc,
+            "auc_id_cosine": train_id_cosine_auc,
+            "auc_id_euclidean": train_id_euclidean_auc,
         }
 
         test_metrics = {
@@ -138,13 +138,13 @@ def fit(
             "loss_pose": test_loss_pose,
             "loss_facial_hair": test_loss_facial_hair,
             "loss_spectacles": test_loss_spectacles,
-            # "auc_gender": test_gender_auc,
-            # "auc_spectacles": test_spectacles_auc,
-            # "auc_facial_hair": test_facial_hair_auc,
-            # "auc_pose": test_pose_auc,
-            # "auc_emotion": test_emotion_auc,
-            # "auc_id_cosine": test_id_cosine_auc,
-            # "auc_id_euclidean": test_id_euclidean_auc,
+            "auc_gender": test_gender_auc,
+            "auc_spectacles": test_spectacles_auc,
+            "auc_facial_hair": test_facial_hair_auc,
+            "auc_pose": test_pose_auc,
+            "auc_emotion": test_emotion_auc,
+            "auc_id_cosine": test_id_cosine_auc,
+            "auc_id_euclidean": test_id_euclidean_auc,
         }
 
 
