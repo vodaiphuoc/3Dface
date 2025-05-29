@@ -18,10 +18,10 @@ class GenderDetectModule(nn.Module):
         )
         self.gender_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_gender, return_embedding: bool)->HeadOutputs:
+    def forward(self, x_gender)->HeadOutputs:
         x_gender_embedding = self.gender_embedding(x_gender)
         x_gender = self.gender_linear(x_gender_embedding)
         return HeadOutputs(
             logits= x_gender,
-            embedding= x_gender_embedding if return_embedding else None
+            embedding= x_gender_embedding
         )

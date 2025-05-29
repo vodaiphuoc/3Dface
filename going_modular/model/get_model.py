@@ -14,9 +14,9 @@ class QuantConcatMTLFaceRecognitionV3(torch.nn.Module):
         self.model = ConcatMTLFaceRecognitionV3(*args, **kwargs)
         self.dequant = torch.ao.quantization.DeQuantStub()
 
-    def forward(self,x, *args, **kwargs):
+    def forward(self,x):
         x = self.quant(x)
-        x = self.model(x, *args, **kwargs)
+        x = self.model(x)
         x = self.dequant(x)
         return x
 

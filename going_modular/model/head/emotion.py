@@ -18,10 +18,10 @@ class EmotionDetectModule(nn.Module):
         )
         self.emotion_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_emotion, return_embedding: bool)->HeadOutputs:
+    def forward(self, x_emotion)->HeadOutputs:
         x_emotion_embedding = self.emotion_embedding(x_emotion)
         x_emotion = self.emotion_linear(x_emotion_embedding)
         return HeadOutputs(
             logits= x_emotion,
-            embedding= x_emotion_embedding if return_embedding else None
+            embedding= x_emotion_embedding
         )

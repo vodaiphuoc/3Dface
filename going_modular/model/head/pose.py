@@ -17,10 +17,10 @@ class PoseDetectModule(nn.Module):
         )
         self.pose_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_pose, return_embedding: bool)->HeadOutputs:
+    def forward(self, x_pose)->HeadOutputs:
         x_pose_embeding = self.pose_embedding(x_pose)
         x_pose = self.pose_linear(x_pose_embeding)
         return HeadOutputs(
             logits=x_pose,
-            embedding= x_pose_embeding if return_embedding else None
+            embedding= x_pose_embeding
         )

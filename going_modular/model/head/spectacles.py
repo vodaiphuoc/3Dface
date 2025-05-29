@@ -17,10 +17,10 @@ class SpectacleDetectModule(nn.Module):
         )
         self.spectacle_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_spectacle, return_embedding: bool)->HeadOutputs:
+    def forward(self, x_spectacle)->HeadOutputs:
         x_spectacle_embedding = self.spectacle_embedding(x_spectacle)
         x_spectacle = self.spectacle_linear(x_spectacle_embedding)
         return HeadOutputs(
             logits= x_spectacle,
-            embedding= x_spectacle_embedding if return_embedding else None
+            embedding= x_spectacle_embedding
         )

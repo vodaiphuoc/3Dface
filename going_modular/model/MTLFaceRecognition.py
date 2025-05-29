@@ -125,7 +125,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
                     for prams in sub_module.parameters():
                         prams.requires_grad = True
 
-    def forward(self, x, return_embedding:bool)->MTLFaceForConcatOutputs:
+    def forward(self, x:bool)->MTLFaceForConcatOutputs:
         (
             (x_spectacles, x_non_spectacles),
             (x_facial_hair, x_non_facial_hair),
@@ -134,12 +134,12 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             (x_gender, x_id)
         ) = self.backbone(x)
         
-        x_spectacles: HeadOutputs = self.spectacles_head(x_spectacles, return_embedding)
-        x_facial_hair: HeadOutputs = self.facial_hair_head(x_facial_hair, return_embedding)
-        x_pose: HeadOutputs = self.pose_head(x_pose, return_embedding)
-        x_emotion: HeadOutputs = self.emotion_head(x_emotion, return_embedding)
-        x_gender: HeadOutputs = self.gender_head(x_gender, return_embedding)
-        x_id: HeadOutputs = self.id_head(x_id, return_embedding)
+        x_spectacles: HeadOutputs = self.spectacles_head(x_spectacles)
+        x_facial_hair: HeadOutputs = self.facial_hair_head(x_facial_hair)
+        x_pose: HeadOutputs = self.pose_head(x_pose)
+        x_emotion: HeadOutputs = self.emotion_head(x_emotion)
+        x_gender: HeadOutputs = self.gender_head(x_gender)
+        x_id: HeadOutputs = self.id_head(x_id)
         
         return MTLFaceForConcatOutputs(
             logits= LogitsOutputs(
@@ -157,7 +157,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
                 x_emotion.embedding,
                 x_gender.embedding,
                 x_id.embedding
-            ) if return_embedding else None
+            )
             
         )
 

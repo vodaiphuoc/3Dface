@@ -18,10 +18,10 @@ class FacialHairDetectModule(nn.Module):
         )
         self.facial_hair_linear = nn.Linear(512, out_neurons)
 
-    def forward(self, x_facial_hair, return_embedding: bool)->HeadOutputs:
+    def forward(self, x_facial_hair)->HeadOutputs:
         x_facial_hair_embedding = self.facial_hair_embedding(x_facial_hair)
         x_facial_hair = self.facial_hair_linear(x_facial_hair_embedding)
         return HeadOutputs(
             logits= x_facial_hair,
-            embedding= x_facial_hair_embedding if return_embedding else None
+            embedding= x_facial_hair_embedding
         )

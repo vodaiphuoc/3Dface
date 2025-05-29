@@ -88,11 +88,11 @@ class IdRecognitionModule(nn.Module):
             )
         self.maglinear = MagLinear(in_features, num_classes)
 
-    def forward(self, x_id: torch.Tensor, return_embedding:bool)->HeadOutputs:
+    def forward(self, x_id: torch.Tensor)->HeadOutputs:
         x_id_embedding = self.id_embedding(x_id)
         logits, x_norm = self.maglinear(x_id_embedding)
         return HeadOutputs(
             logits= (logits, x_norm),
-            embedding= x_id_embedding if return_embedding else None
+            embedding= x_id_embedding
         ) 
     

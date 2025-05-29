@@ -41,14 +41,14 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
         self.spectacles_head = Linear(1536, 2)
   
         
-    def forward(self, x, return_id_embedding:bool = True)->ConcatMTLFaceRecognitionV3Outputs:
+    def forward(self, x)->ConcatMTLFaceRecognitionV3Outputs:
         x_normalmap = x[:, 0, :, :, :]
         x_albedo = x[:, 1, :, :, :]
         x_depthmap = x[:, 2, :, :, :]
         
-        mtl_normalmap_outputs: MTLFaceForConcatOutputs = self.mtl_normalmap(x_normalmap, return_embedding = True)
-        mtl_albedo_outputs: MTLFaceForConcatOutputs = self.mtl_albedo(x_albedo, return_embedding = True)
-        mtl_depthmap_outputs: MTLFaceForConcatOutputs = self.mtl_depthmap(x_depthmap, return_embedding = True)
+        mtl_normalmap_outputs: MTLFaceForConcatOutputs = self.mtl_normalmap(x_normalmap)
+        mtl_albedo_outputs: MTLFaceForConcatOutputs = self.mtl_albedo(x_albedo)
+        mtl_depthmap_outputs: MTLFaceForConcatOutputs = self.mtl_depthmap(x_depthmap)
         
         # Concatenate embeddings from all modalities (normalmap, albedo, depthmap)
         spectacles_embedding = torch.cat([
@@ -87,7 +87,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
         ], dim=1)
 
         # Pass concatenated embeddings through their respective linear layers
-        x_id: HeadOutputs = self.id_head(id_embedding, return_id_embedding)
+        x_id: HeadOutputs = self.id_head(id_embedding)
         x_gender = self.gender_head(gender_embedding)
         x_emotion = self.emotion_head(emotion_embedding)
         x_facial_hair = self.facial_hair_head(facial_hair_embedding)
@@ -103,7 +103,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
                 x_gender,
                 x_id.logits
             ),
-            id_embedding= x_id.embedding if return_id_embedding else None
+            id_embedding= x_id.embedding
         )
 
   
