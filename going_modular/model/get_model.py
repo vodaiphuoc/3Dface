@@ -57,7 +57,7 @@ def build(
             mtl_depthmap, 
             config['num_classes']
         )
-        model.qconfig = torch.ao.quantization.get_default_qat_qconfig('x86')
+        model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         model = torch.ao.quantization.prepare_qat(model.train())
         return model
     else:
@@ -66,5 +66,5 @@ def build(
             mtl_albedo, 
             mtl_depthmap, 
             config['num_classes']
-        )
+        ).train()
         return model
