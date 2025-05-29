@@ -156,8 +156,8 @@ def fit(
 
         process.display()
 
-        if epoch%25 == 0 or epoch == conf['epochs']-1: 
-            model_checkpoint(model, optimizer, epoch + 1, use_quant = conf['use_quant'])
+        # if epoch%25 == 0 or epoch == conf['epochs']-1: 
+        #     model_checkpoint(model, optimizer, epoch + 1, use_quant = conf['use_quant'])
         
         early_stopping([test_id_cosine_auc, test_id_euclidean_auc], model, epoch + 1, use_quant = conf['use_quant'])
         
@@ -176,7 +176,7 @@ def train_epoch(
     optimizer: Optimizer, 
     device: str,
 ):
-    model.to(device)
+    # model.to(device)
     # model.train()
 
     train_loss = 0
@@ -254,7 +254,7 @@ def test_epoch(
     criterion: Module, 
     device: str,
     ):
-    model.to(device)
+    # model.to(device)
     # model.eval()
 
     # Các biến lưu trữ tổng loss từng loại

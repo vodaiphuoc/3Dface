@@ -58,7 +58,8 @@ def build(
             config['num_classes']
         )
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
-        model = torch.ao.quantization.prepare_qat(model.train().to(device))
+        model = model.to(device)
+        model = torch.ao.quantization.prepare_qat(model.train())
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(
