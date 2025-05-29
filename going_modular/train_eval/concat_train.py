@@ -177,7 +177,7 @@ def train_epoch(
     device: str,
 ):
     model.to(device)
-    model.train()
+    # model.train()
 
     train_loss = 0
 
@@ -253,9 +253,9 @@ def test_epoch(
     model: Module, 
     criterion: Module, 
     device: str,
-):
+    ):
     model.to(device)
-    model.eval()
+    # model.eval()
 
     # Các biến lưu trữ tổng loss từng loại
     total_loss_total = 0

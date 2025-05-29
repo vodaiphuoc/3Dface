@@ -1,17 +1,30 @@
-from .MTLFaceRecognition import MTLFaceRecognition, MTLFaceRecognitionForConcat
+from .MTLFaceRecognition import MTLFaceRecognitionForConcat
 from .ConcatMTLFaceRecognition import ConcatMTLFaceRecognitionV3
 import torch
 
-from torchao.quantization.qat import (
-    Int8DynActInt4WeightQATQuantizer
-)
+# from torchao.quantization.qat import (
+#     Int8DynActInt4WeightQATQuantizer
+# )
 from typing import Tuple, Union
+
+class QuantConcatMTLFaceRecognitionV3(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.quant = torch.ao.quantization.QuantStub()
+        self.model = ConcatMTLFaceRecognitionV3(*args, **kwargs)
+        self.dequant = torch.ao.quantization.DeQuantStub()
+
+    def forward(self,x):
+        x = self.quant(x)
+        x = self.model(x)
+        x = self.dequant(x)
+        return x
 
 def build(
         config: dict, 
         load_checkpoint:bool = False,
         training:bool = True
-    )->Tuple[ConcatMTLFaceRecognitionV3, Union[Int8DynActInt4WeightQATQuantizer, None]]:
+    )->Union[ConcatMTLFaceRecognitionV3, QuantConcatMTLFaceRecognitionV3]:
     
     mtl_normalmap = MTLFaceRecognitionForConcat(
         backbone= config['backbone'], 
@@ -37,22 +50,21 @@ def build(
         freeze_options=config['freeze_options']
     )
     
-    model = ConcatMTLFaceRecognitionV3(
-        mtl_normalmap, 
-        mtl_albedo, 
-        mtl_depthmap, 
-        config['num_classes']
-    )
-
     if config['use_quant']:
-        if training:
-            print('add quant')
-            quantizer = Int8DynActInt4WeightQATQuantizer(groupsize= 32)
-            model = quantizer.prepare(model)
-            return model, quantizer
-        else:
-            quantizer = Int8DynActInt4WeightQATQuantizer(groupsize= 32)
-            model = quantizer.convert(model)
-            return model, quantizer
+        model = QuantConcatMTLFaceRecognitionV3(
+            mtl_normalmap, 
+            mtl_albedo, 
+            mtl_depthmap, 
+            config['num_classes']
+        )
+        model.qconfig = torch.ao.quantization.get_default_qat_qconfig('x86')
+        model = torch.ao.quantization.prepare_qat(model.train())
+        return model
     else:
-        return model, None
+        model = ConcatMTLFaceRecognitionV3(
+            mtl_normalmap, 
+            mtl_albedo, 
+            mtl_depthmap, 
+            config['num_classes']
+        )
+        return model

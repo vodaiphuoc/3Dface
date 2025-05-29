@@ -5,26 +5,20 @@ import copy
 seed = 42
 torch.manual_seed(seed)
 
-
-from torchao.quantization.qat import (
-    Int8DynActInt4WeightQATQuantizer
-)
-
 class ModelCheckpoint:
     def __init__(self, 
-                 filepath, 
-                 quantizer: Int8DynActInt4WeightQATQuantizer,
+                 filepath,
                  verbose=0
         ):
         self.filepath = filepath
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.verbose = verbose
-        self.quantizer = quantizer
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
             copied_model = copy.deepcopy(model)
-            save_model = self.quantizer.convert(copied_model)
+            copied_model.eval()
+            save_model = torch.ao.quantization.convert(copied_model)
         else:
             save_model = copy.deepcopy(model)
 

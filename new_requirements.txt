@@ -1,1 +1,3 @@
 torchao
+fvcore
+scikit-learn

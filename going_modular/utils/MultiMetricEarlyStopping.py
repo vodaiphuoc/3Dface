@@ -14,7 +14,6 @@ from torchao.quantization.qat import (
 class MultiMetricEarlyStopping:
     def __init__(
         self,
-        quantizer: Int8DynActInt4WeightQATQuantizer,
         min_delta=0,
         patience=0,
         verbose=0,
@@ -41,7 +40,6 @@ class MultiMetricEarlyStopping:
         self.monitor_keys = monitor_keys or []
         self.start_from_epoch = start_from_epoch
         self.save_dir = save_dir
-        self.quantizer = quantizer
 
         if mode not in ['min', 'max']:
             raise ValueError(f"Invalid mode '{mode}', must be 'min' or 'max'.")
@@ -96,7 +94,8 @@ class MultiMetricEarlyStopping:
                     
                     if use_quant:
                         copied_model = copy.deepcopy(model)
-                        save_model = self.quantizer.convert(copied_model)
+                        copied_model.eval()
+                        save_model = torch.ao.quantization.convert(copied_model)
                     else:
                         save_model = copy.deepcopy(model)
 
