@@ -94,8 +94,7 @@ class MultiMetricEarlyStopping:
                     
                     if use_quant:
                         copied_model = copy.deepcopy(model)
-                        copied_model.eval()
-                        save_model = torch.ao.quantization.convert(copied_model)
+                        save_model = torch.ao.quantization.convert(copied_model.eval())
                     else:
                         save_model = copy.deepcopy(model)
 
