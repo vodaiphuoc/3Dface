@@ -52,7 +52,7 @@ def compute_auc(
             
             images = images.to(device)
             # Trừ id, còn lại đều đã qua softmax
-            outputs: ConcatMTLFaceRecognitionV3Outputs = model(images, return_id_embedding = True)
+            outputs = model(images, return_id_embedding = True)
 
             x_id = outputs.id_embedding
             x_spectacles, x_facial_hair, x_pose, x_emotion, x_gender, _  = outputs.logits.to_tuple()
