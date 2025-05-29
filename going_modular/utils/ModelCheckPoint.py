@@ -16,7 +16,7 @@ class ModelCheckpoint:
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
-            copied_model = copy.deepcopy(model).to('cpu')
+            copied_model = copy.deepcopy(model)
             copied_model.eval()
             save_model = torch.ao.quantization.convert(copied_model)
         else:
