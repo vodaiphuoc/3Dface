@@ -57,10 +57,10 @@ def build(
             mtl_depthmap, 
             config['num_classes']
         )
-        model.eval()
+        
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
-        model.to(device)
-        # model.train()
+        model = model.to(device)
+        model.train()
         model = torch.ao.quantization.prepare_qat(model)
         return model
     else:
