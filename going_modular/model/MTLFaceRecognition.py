@@ -51,13 +51,16 @@ from huggingface_hub import hf_hub_download
 class MTLFaceRecognitionForConcat(torch.nn.Module):
     def __init__(
             self, 
-            backbone: BACKBONE_TYPES, 
-            num_classes:int,
+            config: dict,
             load_checkpoint:bool,
-            mapkey: MAPTYPE_KEYS,
-            freeze_options: BACKBONE_FREEZE
+            mapkey: MAPTYPE_KEYS
         ):
         super().__init__()
+
+        backbone: BACKBONE_TYPES = config['backbone']
+        num_classes = config['num_classes']
+        freeze_options: BACKBONE_FREEZE = config['freeze_options']
+
         self.backbone = create_miresnet(backbone)
         
         # Head

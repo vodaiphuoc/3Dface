@@ -1,6 +1,6 @@
 import torch
 from torch.nn import Linear
-
+from typing import Literal
 from .MTLFaceRecognition import MTLFaceRecognitionForConcat, MTLFaceRecognition
 from .head.id import MagLinear, IdRecognitionModule
 
@@ -15,23 +15,40 @@ from .modeling_output import (
     ConcatMTLFaceRecognitionV3Outputs
 )
 
+MAPTYPE_KEYS = Literal[
+    "normalmap",
+    "albedo",
+    "depthmap"
+]
+
+
 class ConcatMTLFaceRecognitionV3(torch.nn.Module):
     def __init__(
             self, 
-            mtl_normalmap: MTLFaceRecognitionForConcat, 
-            mtl_albedo: MTLFaceRecognitionForConcat, 
-            mtl_depthmap:MTLFaceRecognitionForConcat, 
-            num_classes: int
+            config: dict,
+            load_checkpoint:bool
         ):
         super().__init__()
-        self.mtl_normalmap = mtl_normalmap
-        self.mtl_albedo = mtl_albedo
-        self.mtl_depthmap = mtl_depthmap
+        self.mtl_normalmap = MTLFaceRecognitionForConcat(
+            config= config, 
+            load_checkpoint= load_checkpoint, 
+            mapkey= "normalmap"
+        )
+        self.mtl_albedo = MTLFaceRecognitionForConcat(
+            config= config, 
+            load_checkpoint= load_checkpoint, 
+            mapkey= "albedo"
+        )
+        self.mtl_depthmap = MTLFaceRecognitionForConcat(
+            config= config, 
+            load_checkpoint= load_checkpoint, 
+            mapkey= "depthmap"
+        )
        
         # concat head
         self.id_head = IdRecognitionModule(
             1536, 
-            num_classes,
+            config["num_classes"],
             for_concat_model = True
         )
         self.gender_head = Linear(1536, 2)

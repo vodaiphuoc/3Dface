@@ -26,48 +26,26 @@ def build(
         device: torch.device = torch.device('cuda')
     )->Union[ConcatMTLFaceRecognitionV3, QuantConcatMTLFaceRecognitionV3]:
     
-    mtl_normalmap = MTLFaceRecognitionForConcat(
-        backbone= config['backbone'], 
-        num_classes= config['num_classes'],
-        load_checkpoint= load_checkpoint,
-        mapkey="normalmap",
-        freeze_options=config['freeze_options']
-    )
-    
-    mtl_albedo = MTLFaceRecognitionForConcat(
-        backbone= config['backbone'], 
-        num_classes= config['num_classes'],
-        load_checkpoint= load_checkpoint,
-        mapkey= "albedo",
-        freeze_options=config['freeze_options']
-    )
-    
-    mtl_depthmap = MTLFaceRecognitionForConcat(
-        backbone= config['backbone'], 
-        num_classes= config['num_classes'],
-        load_checkpoint= load_checkpoint,
-        mapkey= "depthmap",
-        freeze_options=config['freeze_options']
-    )
-    
     if config['use_quant']:
         model = QuantConcatMTLFaceRecognitionV3(
-            mtl_normalmap, 
-            mtl_albedo, 
-            mtl_depthmap, 
-            config['num_classes']
+            config =config,
+            load_checkpoint = load_checkpoint
         )
         
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         model = model.to(device)
+
+        print('check device')
+        for _params in model.model.mtl_normalmap.backbone.parameters():
+            print(_params.device)
+
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
+
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(
-            mtl_normalmap, 
-            mtl_albedo, 
-            mtl_depthmap, 
-            config['num_classes']
+            config =config,
+            load_checkpoint = load_checkpoint
         ).train()
         return model
