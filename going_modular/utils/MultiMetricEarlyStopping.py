@@ -100,7 +100,7 @@ class MultiMetricEarlyStopping:
                         save_model = copy.deepcopy(model)
 
                     save_path = os.path.join(self.save_dir, f"best_{key}_{epoch}.pth")
-                    torch.save(save_model, save_path)
+                    torch.save(save_model.state_dict(), save_path)
                     # self.__update_best_epoch_info(key, epoch)
                     if self.verbose:
                         print(f"\tSaved best model weights for '{key}' at epoch {epoch} to '{save_path}'", 'green')

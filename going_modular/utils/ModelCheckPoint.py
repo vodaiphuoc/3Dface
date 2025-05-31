@@ -23,7 +23,7 @@ class ModelCheckpoint:
             save_model = copy.deepcopy(model)
 
         os.makedirs(os.path.join(os.path.dirname(self.filepath),str(epoch)), exist_ok=True)
-        torch.save(save_model, self.filepath.replace('checkpoint.pth',f'{epoch}/checkpoint.pth'))
+        torch.save(save_model.state_dict(), self.filepath.replace('checkpoint.pth',f'{epoch}/checkpoint.pth'))
         if self.verbose > 0:
             print(f"\tSaving model and optimizer state to {self.filepath}")
 
