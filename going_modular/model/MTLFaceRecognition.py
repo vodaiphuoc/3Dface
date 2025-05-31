@@ -1,11 +1,8 @@
 import torch
 
 from .head.id import IdRecognitionModule
-from .head.gender import GenderDetectModule
-from .head.emotion import EmotionDetectModule
-from .head.facialhair import FacialHairDetectModule
-from .head.pose import PoseDetectModule
-from .head.spectacles import SpectacleDetectModule
+
+from .attr_head import AttributesDetectModule
 
 from .backbone.mifr import create_miresnet
 from .grl import GradientReverseLayer
@@ -65,16 +62,19 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         
         # Head
         self.id_head = IdRecognitionModule(in_features= 512, num_classes= num_classes)
-        self.gender_head = GenderDetectModule()
-        self.emotion_head = EmotionDetectModule()
-        self.facial_hair_head = FacialHairDetectModule()
-        self.pose_head = PoseDetectModule()
-        self.spectacles_head = SpectacleDetectModule()
+        self.gender_head = AttributesDetectModule()
+        self.emotion_head = AttributesDetectModule()
+        self.facial_hair_head = AttributesDetectModule()
+        self.pose_head = AttributesDetectModule()
+        self.spectacles_head = AttributesDetectModule()
 
         if load_checkpoint:
             self._load_backbone_ckpt(mapkey)
 
         self._freeze_layers(freeze_options)
+
+        self.quant_backbone_input = torch.ao.quantization.QuantStub()
+        self.dequant_backbone_output = torch.ao.quantization.DeQuantStub()
     
     def _load_backbone_ckpt(self, mapkey: MAPTYPE_KEYS):
         cache_ckpt_path = hf_hub_download(
@@ -128,15 +128,23 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
                     for prams in sub_module.parameters():
                         prams.requires_grad = True
 
-    def forward(self, x:bool)->MTLFaceForConcatOutputs:
+    def forward(self, x:torch.Tensor)->MTLFaceForConcatOutputs:
+        x_quantized_input = self.quant_backbone_input(x)
         (
             (x_spectacles, x_non_spectacles),
             (x_facial_hair, x_non_facial_hair),
             (x_emotion, x_non_emotion),
             (x_pose, x_non_pose),
             (x_gender, x_id)
-        ) = self.backbone(x)
-        
+        ) = self.backbone(x_quantized_input)
+
+        x_spectacles = self.dequant_backbone_output(x_spectacles)
+        x_facial_hair = self.dequant_backbone_output(x_facial_hair)
+        x_pose = self.dequant_backbone_output(x_pose)
+        x_emotion  = self.dequant_backbone_output(x_emotion)
+        x_gender = self.dequant_backbone_output(x_gender)
+        x_id = self.dequant_backbone_output(x_id)
+
         x_spectacles: HeadOutputs = self.spectacles_head(x_spectacles)
         x_facial_hair: HeadOutputs = self.facial_hair_head(x_facial_hair)
         x_pose: HeadOutputs = self.pose_head(x_pose)
