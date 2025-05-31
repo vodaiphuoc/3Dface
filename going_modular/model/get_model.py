@@ -45,14 +45,15 @@ def build(
             load_checkpoint = load_checkpoint
         )
         if quant_mode == "qat":
-            model.qconfig = torch.ao.quantization.get_default_qat_qconfig('fbgemm')
+            model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
+            torch.backends.quantized.engine = 'qnnpack'
             model.train()
             model = torch.ao.quantization.prepare_qat(model)
             model = torch.compile(model).to(device)
         else:
-            model.qconfig = torch.ao.quantization.get_default_qconfig('fbgemm')
-            model.train()
-            model = torch.ao.quantization.prepare(model)
+            model.qconfig = torch.ao.quantization.get_default_qconfig('qnnpack')
+            torch.backends.quantized.engine = 'qnnpack'
+            model = torch.ao.quantization.prepare(model.train())
             model = model.to(device)
         
         return model
