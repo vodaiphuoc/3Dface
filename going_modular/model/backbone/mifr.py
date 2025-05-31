@@ -93,10 +93,10 @@ class AttentionModule(nn.Module):
 
 # Backbone trích xuât featuremap
 class MIResNet(nn.Module):
-    inplanes = 64
+    
     def __init__(self, layers: list[int]):
         super().__init__()
-
+        self.inplanes = 64
         self.conv1 = nn.Conv2d(
             3, 
             64, 
