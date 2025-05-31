@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-import torch.ao.nn.quantized.functional as F_q
+
 from .irse import iResNet, BasicBlock, Bottleneck, conv1x1
 
 # Đặt seed toàn cục
@@ -12,26 +12,6 @@ torch.manual_seed(seed)
 # cho phép mô hình trích xuất feature hiệu quả ở nhiều mức độ không spatial (không gian) khác nhau.
 # Bản chất SPP sử dụng các pooling layer với các kích thước khác nhau và concat lại (kích thước ouput luôn là cố định)
 
-
-# class MaxPoolingWrapper(nn.Module):
-#     def __init__(self, output_size):
-#         super().__init__()
-#         self.output_size = output_size
-#         self.adaptive_max_pool = nn.AdaptiveMaxPool2d(output_size)
-        
-#         self.quant = torch.ao.quantization.QuantStub()
-#         self.dequant = torch.ao.quantization.DeQuantStub()
-
-#     def forward(self, x):
-#         x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
-#         x = self.adaptive_max_pool(x)
-#         x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
-#         return x
-
-#     @classmethod
-#     def from_float(cls, float_module):
-#         q_module = cls(float_module.output_size)
-#         return q_module
 
 # class AvgPoolingWrapper(nn.Module):
 #     def __init__(self, output_size):
@@ -60,74 +40,31 @@ class SPPModuleAvg(nn.Module):
     def __init__(self, sizes=(1, 2, 3, 6)):
         super().__init__()
         self.sizes = sizes
-        # if pool_mode == 'avg':
-        #     pool_layer = AvgPoolingWrapper
-        # elif pool_mode == 'max':
-        #     pool_layer = MaxPoolingWrapper
-        # else:
-        #     raise NotImplementedError
-
-        # self.pool_blocks = nn.ModuleList([
-        #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
-        # ])
-        self.quant = torch.ao.quantization.QuantStub()
-        self.dequant = torch.ao.quantization.DeQuantStub()
-
+        self.pool_blocks = nn.ModuleList([
+            nn.Sequential(nn.AvgPool2d(size), nn.Flatten()) for size in sizes
+        ])
+        
     def forward(self, x):
-        x = self.quant(x)
-        xs = [F_q.adaptive_avg_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
-
-        # xs = [block(x) for block in self.pool_blocks]
+        xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
-        x = self.dequant(x)
         return x
-    
-    # @classmethod
-    # def from_float(cls, float_module):
-    #     # Create an instance of the quantized module
-    #     q_module = cls()
-    #     # No parameters to copy for AdaptiveMaxPool2d, but for other layers
-    #     # you might copy weights/biases if applicable.
-    #     return q_module
-
 
 class SPPModuleMax(nn.Module):
     def __init__(self, sizes=(1, 2, 3, 6)):
         super().__init__()
         self.sizes = sizes
-        # if pool_mode == 'avg':
-        #     pool_layer = AvgPoolingWrapper
-        # elif pool_mode == 'max':
-        #     pool_layer = MaxPoolingWrapper
-        # else:
-        #     raise NotImplementedError
-
-        # self.pool_blocks = nn.ModuleList([
-        #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
-        # ])
+        self.pool_blocks = nn.ModuleList([
+            nn.Sequential(nn.MaxPool2d(size), nn.Flatten()) for size in sizes
+        ])
         
-        self.quant = torch.ao.quantization.QuantStub()
-        self.dequant = torch.ao.quantization.DeQuantStub()
-
     def forward(self, x):
-        x = self.quant(x)
-        xs = [F_q.max_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
-        # xs = [block(x) for block in self.pool_blocks]
+        xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
-        x = self.dequant(x)
+        
         return x
     
-    # @classmethod
-    # def from_float(cls, float_module):
-    #     # Create an instance of the quantized module
-    #     q_module = cls()
-    #     # No parameters to copy for AdaptiveMaxPool2d, but for other layers
-    #     # you might copy weights/biases if applicable.
-    #     return q_module
-
-
 class AttentionModule(nn.Module):
     # reduction: giảm số lượng channel trong Channel Attention
     # Thông qua Conv2d với kernel size = 1, số kênh ban đầu _channels được giảm còn _channels // reduction trước khi được phục hồi về channels
@@ -137,10 +74,10 @@ class AttentionModule(nn.Module):
         pool_size = (1, 2, 3)
         # Học thông tin bối cảnh từ nhiều cấp độ
         self.avg_spp = SPPModuleAvg(pool_size)
-        self.avg_spp.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
+        
         # Học các đặc điểm nổi bật từ nhiều cấp độ
         self.max_spp = SPPModuleMax(pool_size)
-        self.max_spp.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
+        
         # Học ma trận attention theo spatial từ đầu vào: input (N,2,H,W), ouput (N,1,H,W) với giá trị xác xuất
         self.spatial = nn.Sequential(
             # in_channels = 2: Max Pooling và Average Pooling theo chiều kênh
