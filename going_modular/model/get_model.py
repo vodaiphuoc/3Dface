@@ -35,13 +35,16 @@ def build(
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         model = model.to(device)
 
-        print('check device')
-        for _params in model.model.mtl_normalmap.backbone.parameters():
-            print(_params.device)
+        
+        _devices = set([
+            _params.device 
+            for _params in model.model.mtl_normalmap.backbone.parameters()
+        ])
+        print('check device: ', _devices)
 
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
-
+        model = model.to(device)
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(
