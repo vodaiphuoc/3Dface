@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from .irse import iResNet, BasicBlock, Bottleneck
+from .irse import BasicBlock
 
 # Đặt seed toàn cục
 seed = 42
@@ -78,7 +78,7 @@ class AttentionModule(nn.Module):
         )
 
     def forward(self, x):
-        channel_input = self.avg_spp(x) + self.max_spp(x)
+        channel_input = torch.add(self.avg_spp(x), self.max_spp(x))
         channel_scale = self.channel(channel_input)
 
         spatial_input = torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
@@ -92,23 +92,93 @@ class AttentionModule(nn.Module):
 
 
 # Backbone trích xuât featuremap
-class MIResNet(iResNet):
-    def __init__(self, block, layers, **kwargs):
-        super(MIResNet, self).__init__(block, layers, **kwargs)
+class MIResNet(nn.Module):
+    def __init__(self, layers: list[int]):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(
+            3, 
+            64, 
+            kernel_size=7, 
+            stride=2, 
+            padding=3,
+            bias=False
+        )
+        self.bn1 = nn.BatchNorm2d(64)
+        self.prelu = nn.PReLU()
+
+        self.layer_list = nn.ModuleList([
+            self._make_layer(
+                planes = 64*(2**_ith), 
+                blocks = _layer, 
+                stride = 2
+            )
+            for _ith, _layer in enumerate(layers)
+        ])
+
         self.spectacles_fsm = AttentionModule()
         self.facial_hair_fsm = AttentionModule()
         self.emotion_fsm = AttentionModule()
         self.pose_fsm = AttentionModule()
         self.gender_fsm = AttentionModule()
+    
+    def _make_layer(self, planes:int, blocks:int, stride=2)->nn.Sequential:
+        
+        downsample = None
+        if stride != 1 and self.inplanes != planes * BasicBlock.expansion:
+            downsample = nn.Sequential(
+                nn.MaxPool2d(kernel_size=3, stride=stride, padding=1),
+                nn.Conv2d(self.inplanes, planes * BasicBlock.expansion, kernel_size=1, stride = 1, bias=False), 
+                nn.BatchNorm2d(planes * BasicBlock.expansion),
+            )
+        elif self.inplanes != planes * BasicBlock.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(self.inplanes, planes * BasicBlock.expansion, kernel_size=1, stride = 1, bias=False),
+                nn.BatchNorm2d(planes * BasicBlock.expansion),
+            )
+        elif stride != 1:
+            downsample = nn.MaxPool2d(kernel_size=3, stride=stride, padding=1)
+
+        layers = []
+        layers.append(
+            BasicBlock(
+                self.inplanes, 
+                planes, 
+                stride, 
+                downsample,
+                start_block=True
+            )
+        )
+        self.inplanes = planes * BasicBlock.expansion
+        exclude_bn0 = True
+        for _ in range(1, (blocks-1)):
+            layers.append(
+                BasicBlock(
+                    self.inplanes, 
+                    planes, 
+                    exclude_bn0=exclude_bn0
+                )
+            )
+            exclude_bn0 = False
+
+        layers.append(
+            BasicBlock(
+                self.inplanes, 
+                planes, 
+                end_block=True, 
+                exclude_bn0=exclude_bn0
+            )
+        )
+
+        return nn.Sequential(*layers)
 
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.prelu(x)
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
-        x = self.layer4(x)
+
+        for _layer in self.layer_list:
+            x = _layer(x)
         
         x_non_spectacles, x_spectacles = self.spectacles_fsm(x)
         x_non_facial_hair, x_facial_hair = self.facial_hair_fsm(x_non_spectacles)
@@ -125,20 +195,12 @@ class MIResNet(iResNet):
             )
 
 
-def create_miresnet(model_name, **kwargs):
+def create_miresnet(model_name):
     configs = {
-        "miresnet18": (BasicBlock, [2, 2, 2, 2]),
-        "miresnet34": (BasicBlock, [3, 4, 6, 3]),
-        "miresnet50": (Bottleneck, [3, 4, 6, 3]),
-        "miresnet101": (Bottleneck, [3, 4, 23, 3]),
-        "miresnet152": (Bottleneck, [3, 8, 36, 3]),
+        "miresnet18": [2, 2, 2, 2],
+        "miresnet34": [3, 4, 6, 3]
     }
-    if model_name not in configs:
-        raise ValueError(f"Model '{model_name}' không được hỗ trợ. Các model hợp lệ: {list(configs.keys())}")
     
-    block, layers = configs[model_name]
-    return MIResNet(block, layers, **kwargs)
+    layers = configs[model_name]
+    return MIResNet(layers)
 
-
-if __name__ == '__main':
-    backbone = create_miresnet('miresnet18', num_classes = 1000)
