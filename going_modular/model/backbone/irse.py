@@ -43,6 +43,8 @@ class BasicBlock(nn.Module):
         self.end_block = end_block
         self.exclude_bn0 = exclude_bn0
 
+        self.add_ops = torch.ao.nn.quantized.FloatFunctional()
+
     def forward(self, x):
         identity = x
 
@@ -67,7 +69,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out = torch.add(out, identity)
+        out = self.add_ops(out, identity)
 
         if self.end_block:
             out = self.bn2(out)
