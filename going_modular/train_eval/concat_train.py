@@ -195,6 +195,7 @@ def train_epoch(
 
         optimizer.zero_grad()
 
+        print('X shape:' , X.shape)
         outputs = model(X)
 
         # flatten all logits
