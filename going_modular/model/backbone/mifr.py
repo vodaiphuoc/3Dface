@@ -90,6 +90,7 @@ class AttentionModule(nn.Module):
         self.add_ops = torch.ao.nn.quantized.FloatFunctional()
 
     def forward(self, x):
+        print('input shape: ', x.shape)
         avg_out = self.avg_spp(x)
         max_out = self.max_spp(x)
 
