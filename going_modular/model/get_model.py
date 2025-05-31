@@ -46,9 +46,9 @@ def build(
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         model = model.to(device)
 
-        for sub_module in model.modules():
-            if isinstance(sub_module, USAGE_LAYERS):
-                sub_module.qconfig.weight() = sub_module.qconfig.weight().to(device)
+        # for sub_module in model.modules():
+        #     if isinstance(sub_module, USAGE_LAYERS):
+        #         sub_module.qconfig.weight() = sub_module.qconfig.weight().to(device)
 
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
