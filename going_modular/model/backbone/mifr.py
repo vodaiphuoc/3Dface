@@ -83,13 +83,13 @@ class SPPModuleAvg(nn.Module):
         x = self.dequant(x)
         return x
     
-    @classmethod
-    def from_float(cls, float_module):
-        # Create an instance of the quantized module
-        q_module = cls()
-        # No parameters to copy for AdaptiveMaxPool2d, but for other layers
-        # you might copy weights/biases if applicable.
-        return q_module
+    # @classmethod
+    # def from_float(cls, float_module):
+    #     # Create an instance of the quantized module
+    #     q_module = cls()
+    #     # No parameters to copy for AdaptiveMaxPool2d, but for other layers
+    #     # you might copy weights/biases if applicable.
+    #     return q_module
 
 
 class SPPModuleMax(nn.Module):
@@ -119,13 +119,13 @@ class SPPModuleMax(nn.Module):
         x = self.dequant(x)
         return x
     
-    @classmethod
-    def from_float(cls, float_module):
-        # Create an instance of the quantized module
-        q_module = cls()
-        # No parameters to copy for AdaptiveMaxPool2d, but for other layers
-        # you might copy weights/biases if applicable.
-        return q_module
+    # @classmethod
+    # def from_float(cls, float_module):
+    #     # Create an instance of the quantized module
+    #     q_module = cls()
+    #     # No parameters to copy for AdaptiveMaxPool2d, but for other layers
+    #     # you might copy weights/biases if applicable.
+    #     return q_module
 
 
 class AttentionModule(nn.Module):
