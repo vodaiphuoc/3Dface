@@ -71,9 +71,12 @@ class SPPModuleAvg(nn.Module):
         # self.pool_blocks = nn.ModuleList([
         #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
         # ])
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
 
     def forward(self, x):
-        xs = [adaptive_avg_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
+        x = self.quant(x)
+        xs = [self.dequant(adaptive_avg_pool2d(x,_size).flatten(start_dim=1)) for _size in self.sizes]
 
         # xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
@@ -95,9 +98,13 @@ class SPPModuleMax(nn.Module):
         # self.pool_blocks = nn.ModuleList([
         #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
         # ])
+        
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
 
     def forward(self, x):
-        xs = [max_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
+        x = self.quant(x)
+        xs = [self.dequant(max_pool2d(x,_size).flatten(start_dim=1)) for _size in self.sizes]
         # xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
