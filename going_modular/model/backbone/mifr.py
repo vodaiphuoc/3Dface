@@ -20,7 +20,14 @@ class SPPModuleAvg(nn.Module):
         super().__init__()
         self.sizes = sizes
         self.pool_blocks = nn.ModuleList([
-            nn.Sequential(nn.AvgPool2d(size), nn.Flatten()) for size in sizes
+            nn.Sequential(
+                nn.AvgPool2d(kernel_size = 8//size) \
+                    if 8%size == 0 else \
+                    nn.AvgPool2d(kernel_size = 4, stride= 1)
+                , 
+                nn.Flatten()
+            ) 
+            for size in sizes
         ])
         
     def forward(self, x):
@@ -34,7 +41,14 @@ class SPPModuleMax(nn.Module):
         super().__init__()
         self.sizes = sizes
         self.pool_blocks = nn.ModuleList([
-            nn.Sequential(nn.MaxPool2d(size), nn.Flatten()) for size in sizes
+            nn.Sequential(
+                nn.MaxPool2d(kernel_size = 8//size) \
+                    if 8%size == 0 else \
+                    nn.MaxPool2d(kernel_size = 4, stride= 1)
+                , 
+                nn.Flatten()
+            ) 
+            for size in sizes
         ])
         
     def forward(self, x):
