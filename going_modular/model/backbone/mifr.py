@@ -1,7 +1,8 @@
 import torch
 from torch import nn
-
-from .irse import iResNet, BasicBlock, Bottleneck, conv1x1, conv3x3
+from torch.ao.nn.quantized.functional import adaptive_avg_pool2d
+from torch.ao.nn.quantized.functional import max_pool2d
+from .irse import iResNet, BasicBlock, Bottleneck, conv1x1
 
 # Đặt seed toàn cục
 seed = 42
@@ -13,67 +14,91 @@ torch.manual_seed(seed)
 # Bản chất SPP sử dụng các pooling layer với các kích thước khác nhau và concat lại (kích thước ouput luôn là cố định)
 
 
-class MaxPoolingWrapper(nn.Module):
-    def __init__(self, output_size):
-        super().__init__()
-        self.output_size = output_size
-        self.adaptive_max_pool = nn.AdaptiveMaxPool2d(output_size)
+# class MaxPoolingWrapper(nn.Module):
+#     def __init__(self, output_size):
+#         super().__init__()
+#         self.output_size = output_size
+#         self.adaptive_max_pool = nn.AdaptiveMaxPool2d(output_size)
         
-        self.quant = torch.ao.quantization.QuantStub()
-        self.dequant = torch.ao.quantization.DeQuantStub()
+#         self.quant = torch.ao.quantization.QuantStub()
+#         self.dequant = torch.ao.quantization.DeQuantStub()
 
-    def forward(self, x):
-        x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
-        x = self.adaptive_max_pool(x)
-        x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
-        return x
+#     def forward(self, x):
+#         x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
+#         x = self.adaptive_max_pool(x)
+#         x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
+#         return x
 
-    @classmethod
-    def from_float(cls, float_module):
-        q_module = cls(float_module.output_size)
-        return q_module
+#     @classmethod
+#     def from_float(cls, float_module):
+#         q_module = cls(float_module.output_size)
+#         return q_module
 
-class AvgPoolingWrapper(nn.Module):
-    def __init__(self, output_size):
-        super().__init__()
-        self.output_size = output_size
-        self.adaptive_max_pool = nn.AdaptiveAvgPool2d(output_size)
+# class AvgPoolingWrapper(nn.Module):
+#     def __init__(self, output_size):
+#         super().__init__()
+#         self.output_size = output_size
+#         self.adaptive_max_pool = nn.AdaptiveAvgPool2d(output_size)
         
-        self.quant = torch.ao.quantization.QuantStub()
-        self.dequant = torch.ao.quantization.DeQuantStub()
+#         self.quant = torch.ao.quantization.QuantStub()
+#         self.dequant = torch.ao.quantization.DeQuantStub()
 
-    def forward(self, x):
-        x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
-        x = self.adaptive_max_pool(x)
-        x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
-        return x
+#     def forward(self, x):
+#         x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
+#         x = self.adaptive_max_pool(x)
+#         x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
+#         return x
 
-    @classmethod
-    def from_float(cls, float_module):
-        q_module = cls(float_module.output_size)
-        return q_module
+#     @classmethod
+#     def from_float(cls, float_module):
+#         q_module = cls(float_module.output_size)
+#         return q_module
 
-
-
-class SPPModule(nn.Module):
+class SPPModuleAvg(nn.Module):
     # Sau khi qua các lớp pooling, ta thu được các tensor có kích thước (B, C, 1, 1), (B, C, 2, 2), (B, C, 3, 3), (B, C, 6, 6)
     # Tiến hành làm phẳng thành 1-D vector: (B, C), (B, 4C), (B, 9C), (B, 16C) => cat lại (B, 30C)
     # view lại thành (B, 30C, 1, 1)
     def __init__(self, pool_mode='avg', sizes=(1, 2, 3, 6)):
         super().__init__()
-        if pool_mode == 'avg':
-            pool_layer = AvgPoolingWrapper
-        elif pool_mode == 'max':
-            pool_layer = MaxPoolingWrapper
-        else:
-            raise NotImplementedError
+        self.sizes = sizes
+        # if pool_mode == 'avg':
+        #     pool_layer = AvgPoolingWrapper
+        # elif pool_mode == 'max':
+        #     pool_layer = MaxPoolingWrapper
+        # else:
+        #     raise NotImplementedError
 
-        self.pool_blocks = nn.ModuleList([
-            nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
-        ])
+        # self.pool_blocks = nn.ModuleList([
+        #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
+        # ])
 
     def forward(self, x):
-        xs = [block(x) for block in self.pool_blocks]
+        xs = [adaptive_avg_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
+
+        # xs = [block(x) for block in self.pool_blocks]
+        x = torch.cat(xs, dim=1)
+        x = x.view(x.size(0), x.size(1), 1, 1)
+        return x
+
+
+class SPPModuleMax(nn.Module):
+    def __init__(self, sizes=(1, 2, 3, 6)):
+        super().__init__()
+        self.sizes = sizes
+        # if pool_mode == 'avg':
+        #     pool_layer = AvgPoolingWrapper
+        # elif pool_mode == 'max':
+        #     pool_layer = MaxPoolingWrapper
+        # else:
+        #     raise NotImplementedError
+
+        # self.pool_blocks = nn.ModuleList([
+        #     nn.Sequential(pool_layer(size), nn.Flatten()) for size in sizes
+        # ])
+
+    def forward(self, x):
+        xs = [max_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
+        # xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
         return x
@@ -87,9 +112,9 @@ class AttentionModule(nn.Module):
         kernel_size = 7
         pool_size = (1, 2, 3)
         # Học thông tin bối cảnh từ nhiều cấp độ
-        self.avg_spp = SPPModule('avg', pool_size)
+        self.avg_spp = SPPModuleAvg(pool_size)
         # Học các đặc điểm nổi bật từ nhiều cấp độ
-        self.max_spp = SPPModule('max', pool_size)
+        self.max_spp = SPPModuleMax(pool_size)
         # Học ma trận attention theo spatial từ đầu vào: input (N,2,H,W), ouput (N,1,H,W) với giá trị xác xuất
         self.spatial = nn.Sequential(
             # in_channels = 2: Max Pooling và Average Pooling theo chiều kênh
