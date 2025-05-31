@@ -1,10 +1,21 @@
 from .MTLFaceRecognition import MTLFaceRecognitionForConcat
 from .ConcatMTLFaceRecognition import ConcatMTLFaceRecognitionV3
 import torch
+import torch.nn as nn
 
-# from torchao.quantization.qat import (
-#     Int8DynActInt4WeightQATQuantizer
-# )
+USAGE_LAYERS = (
+    nn.Conv2d,
+    nn.BatchNorm2d,
+    nn.PReLU,
+    nn.Linear,
+    nn.ReLU,
+    nn.Sigmoid,
+    nn.AdaptiveAvgPool2d,
+    nn.MaxPool2d,
+    nn.Flatten,
+)
+
+
 from typing import Tuple, Union
 
 class QuantConcatMTLFaceRecognitionV3(torch.nn.Module):
@@ -35,16 +46,13 @@ def build(
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         model = model.to(device)
 
-        
-        _devices = set([
-            _params.device 
-            for _params in model.model.mtl_normalmap.backbone.parameters()
-        ])
-        print('check device: ', _devices)
+        for sub_module in model.modules():
+            if isinstance(sub_module, USAGE_LAYERS):
+                sub_module.qconfig.weight() = sub_module.qconfig.weight().to(device)
 
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
-        model = model.to(device)
+        
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(

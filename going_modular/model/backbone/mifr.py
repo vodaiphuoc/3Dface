@@ -112,7 +112,7 @@ class MIResNet(iResNet):
         
         x_non_spectacles, x_spectacles = self.spectacles_fsm(x)
         x_non_facial_hair, x_facial_hair = self.facial_hair_fsm(x_non_spectacles)
-        x_non_emotion, x_emotion = self.facial_hair_fsm(x_non_facial_hair)
+        x_non_emotion, x_emotion = self.emotion_fsm(x_non_facial_hair)
         x_non_pose, x_pose = self.pose_fsm(x_non_emotion)
         x_id, x_gender = self.gender_fsm(x_non_pose)
         
