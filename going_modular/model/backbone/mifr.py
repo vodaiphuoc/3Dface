@@ -93,8 +93,8 @@ class AttentionModule(nn.Module):
         avg_out = self.avg_spp(x)
         max_out = self.max_spp(x)
 
-        print('avg out shape: ', avg_out)
-        print('max out shape: ', max_out)
+        print('avg out shape: ', avg_out.shape)
+        print('max out shape: ', max_out.shape)
 
         channel_input =  self.add_ops.add(avg_out, max_out)
 
@@ -107,8 +107,8 @@ class AttentionModule(nn.Module):
         spatial_scale = self.spatial(spatial_input)
 
         x_non_id = (x * channel_scale + x * spatial_scale) * 0.5
-
-        x_id = x - x_non_id
+        
+        x_id = self.add_ops.add(x, self.add_ops.mul_scalar(x_non_id, -1))
         
         return x_id, x_non_id
 
