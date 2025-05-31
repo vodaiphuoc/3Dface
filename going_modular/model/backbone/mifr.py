@@ -104,23 +104,18 @@ class AttentionModule(nn.Module):
         self.add_ops = torch.ao.nn.quantized.FloatFunctional()
 
     def forward(self, x):
-        print('input shape: ', x.shape)
         avg_out = self.avg_spp(x)
         max_out = self.max_spp(x)
 
-        print('avg out shape: ', avg_out.shape)
-        print('max out shape: ', max_out.shape)
-
         channel_input =  self.add_ops.add(avg_out, max_out)
-
         channel_input =  self.add_ops.add(avg_out, max_out)
-        print(' shape before conv: ', channel_input.shape)
-
         channel_scale = self.channel(channel_input)
 
         spatial_input = torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
         spatial_scale = self.spatial(spatial_input)
 
+        print('channel_scale shape:  ', channel_scale.shape)
+        print('spatial_scale shape: ', spatial_scale.shape)
         x_non_id = (x * channel_scale + x * spatial_scale) * 0.5
         
         x_id = self.add_ops.add(x, self.add_ops.mul_scalar(x_non_id, -1))
