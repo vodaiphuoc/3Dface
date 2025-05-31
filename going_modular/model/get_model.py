@@ -49,7 +49,7 @@ def build(
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
         for sub_module in model.modules():
-            if isinstance(sub_module, USAGE_LAYERS):
+            if isinstance(sub_module, USAGE_LAYERS) and hasattr(sub_module,"weight_fake_quant"):
                 sub_module.weight_fake_quant = sub_module.weight_fake_quant.to(device)
 
         return model
