@@ -12,27 +12,6 @@ torch.manual_seed(seed)
 # cho phép mô hình trích xuất feature hiệu quả ở nhiều mức độ không spatial (không gian) khác nhau.
 # Bản chất SPP sử dụng các pooling layer với các kích thước khác nhau và concat lại (kích thước ouput luôn là cố định)
 
-
-# class AvgPoolingWrapper(nn.Module):
-#     def __init__(self, output_size):
-#         super().__init__()
-#         self.output_size = output_size
-#         self.adaptive_max_pool = nn.AdaptiveAvgPool2d(output_size)
-        
-#         self.quant = torch.ao.quantization.QuantStub()
-#         self.dequant = torch.ao.quantization.DeQuantStub()
-
-#     def forward(self, x):
-#         x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
-#         x = self.adaptive_max_pool(x)
-#         x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
-#         return x
-
-#     @classmethod
-#     def from_float(cls, float_module):
-#         q_module = cls(float_module.output_size)
-#         return q_module
-
 class SPPModuleAvg(nn.Module):
     # Sau khi qua các lớp pooling, ta thu được các tensor có kích thước (B, C, 1, 1), (B, C, 2, 2), (B, C, 3, 3), (B, C, 6, 6)
     # Tiến hành làm phẳng thành 1-D vector: (B, C), (B, 4C), (B, 9C), (B, 16C) => cat lại (B, 30C)
@@ -108,8 +87,20 @@ class AttentionModule(nn.Module):
             nn.Sigmoid()
         )
 
+        self.add_ops = torch.ao.nn.quantized.FloatFunctional()
+
     def forward(self, x):
-        channel_input = self.avg_spp(x) + self.max_spp(x)
+        avg_out = self.avg_spp(x)
+        max_out = self.max_spp(x)
+
+        print('avg out shape: ', avg_out)
+        print('max out shape: ', max_out)
+
+        channel_input =  self.add_ops.add(avg_out, max_out)
+
+        channel_input =  self.add_ops.add(avg_out, max_out)
+        print(' shape before conv: ', channel_input.shape)
+
         channel_scale = self.channel(channel_input)
 
         spatial_input = torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
