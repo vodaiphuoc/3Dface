@@ -1,7 +1,6 @@
 import torch
 from torch import nn
-from torch.ao.nn.quantized.functional import adaptive_avg_pool2d
-from torch.ao.nn.quantized.functional import max_pool2d
+import torch.ao.nn.quantized.functional as F_q
 from .irse import iResNet, BasicBlock, Bottleneck, conv1x1
 
 # Đặt seed toàn cục
@@ -76,11 +75,12 @@ class SPPModuleAvg(nn.Module):
 
     def forward(self, x):
         x = self.quant(x)
-        xs = [self.dequant(adaptive_avg_pool2d(x,_size).flatten(start_dim=1)) for _size in self.sizes]
+        xs = [F_q.adaptive_avg_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
 
         # xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
+        x = self.dequant(x)
         return x
     
     @classmethod
@@ -112,10 +112,11 @@ class SPPModuleMax(nn.Module):
 
     def forward(self, x):
         x = self.quant(x)
-        xs = [self.dequant(max_pool2d(x,_size).flatten(start_dim=1)) for _size in self.sizes]
+        xs = [F_q.max_pool2d(x,_size).flatten(start_dim=1) for _size in self.sizes]
         # xs = [block(x) for block in self.pool_blocks]
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
+        x = self.dequant(x)
         return x
     
     @classmethod
