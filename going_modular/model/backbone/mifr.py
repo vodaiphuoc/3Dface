@@ -58,7 +58,7 @@ class SPPModuleAvg(nn.Module):
     # Sau khi qua các lớp pooling, ta thu được các tensor có kích thước (B, C, 1, 1), (B, C, 2, 2), (B, C, 3, 3), (B, C, 6, 6)
     # Tiến hành làm phẳng thành 1-D vector: (B, C), (B, 4C), (B, 9C), (B, 16C) => cat lại (B, 30C)
     # view lại thành (B, 30C, 1, 1)
-    def __init__(self, pool_mode='avg', sizes=(1, 2, 3, 6)):
+    def __init__(self, sizes=(1, 2, 3, 6)):
         super().__init__()
         self.sizes = sizes
         # if pool_mode == 'avg':
@@ -120,8 +120,10 @@ class AttentionModule(nn.Module):
         pool_size = (1, 2, 3)
         # Học thông tin bối cảnh từ nhiều cấp độ
         self.avg_spp = SPPModuleAvg(pool_size)
+        self.avg_spp.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         # Học các đặc điểm nổi bật từ nhiều cấp độ
         self.max_spp = SPPModuleMax(pool_size)
+        self.max_spp.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
         # Học ma trận attention theo spatial từ đầu vào: input (N,2,H,W), ouput (N,1,H,W) với giá trị xác xuất
         self.spatial = nn.Sequential(
             # in_channels = 2: Max Pooling và Average Pooling theo chiều kênh
