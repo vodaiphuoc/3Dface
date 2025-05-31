@@ -67,7 +67,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out = torch.add (out + identity)
+        out = torch.add(out, identity)
 
         if self.end_block:
             out = self.bn2(out)
