@@ -67,7 +67,7 @@ class BasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
+        out = torch.add (out + identity)
 
         if self.end_block:
             out = self.bn2(out)
@@ -148,7 +148,7 @@ class Bottleneck(nn.Module):
 
 class iResNet(nn.Module):
 
-    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False, norm_layer=None, dropout_prob0=0.0):
+    def __init__(self, block, layers, num_classes=1000, zero_init_residual=False, norm_layer=None):
         super(iResNet, self).__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
@@ -162,12 +162,6 @@ class iResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2, norm_layer=norm_layer)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2, norm_layer=norm_layer)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-
-        if dropout_prob0 > 0.0:
-            self.dp = nn.Dropout(dropout_prob0, inplace=True)
-            print("Using Dropout with the prob to set to 0 of: ", dropout_prob0)
-        else:
-            self.dp = None
 
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
@@ -236,12 +230,7 @@ class iResNet(nn.Module):
 
         x = self.avgpool(x)
         x = x.view(x.size(0), -1)
-
-        if self.dp is not None:
-            x = self.dp(x)
-
         x = self.fc(x)
-
         return x
 
 
