@@ -82,6 +82,14 @@ class SPPModuleAvg(nn.Module):
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
         return x
+    
+    @classmethod
+    def from_float(cls, float_module):
+        # Create an instance of the quantized module
+        q_module = cls()
+        # No parameters to copy for AdaptiveMaxPool2d, but for other layers
+        # you might copy weights/biases if applicable.
+        return q_module
 
 
 class SPPModuleMax(nn.Module):
@@ -109,6 +117,14 @@ class SPPModuleMax(nn.Module):
         x = torch.cat(xs, dim=1)
         x = x.view(x.size(0), x.size(1), 1, 1)
         return x
+    
+    @classmethod
+    def from_float(cls, float_module):
+        # Create an instance of the quantized module
+        q_module = cls()
+        # No parameters to copy for AdaptiveMaxPool2d, but for other layers
+        # you might copy weights/biases if applicable.
+        return q_module
 
 
 class AttentionModule(nn.Module):
