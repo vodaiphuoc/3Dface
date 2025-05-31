@@ -12,6 +12,49 @@ torch.manual_seed(seed)
 # cho phép mô hình trích xuất feature hiệu quả ở nhiều mức độ không spatial (không gian) khác nhau.
 # Bản chất SPP sử dụng các pooling layer với các kích thước khác nhau và concat lại (kích thước ouput luôn là cố định)
 
+
+class MaxPoolingWrapper(nn.Module):
+    def __init__(self, output_size):
+        super().__init__()
+        self.output_size = output_size
+        self.adaptive_max_pool = nn.AdaptiveMaxPool2d(output_size)
+        
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
+
+    def forward(self, x):
+        x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
+        x = self.adaptive_max_pool(x)
+        x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
+        return x
+
+    @classmethod
+    def from_float(cls, float_module):
+        q_module = cls(float_module.output_size)
+        return q_module
+
+class AvgPoolingWrapper(nn.Module):
+    def __init__(self, output_size):
+        super().__init__()
+        self.output_size = output_size
+        self.adaptive_max_pool = nn.AdaptiveAvgPool2d(output_size)
+        
+        self.quant = torch.ao.quantization.QuantStub()
+        self.dequant = torch.ao.quantization.DeQuantStub()
+
+    def forward(self, x):
+        x = self.quant(x) # Ensure input is quantized if it enters this custom module as float
+        x = self.adaptive_max_pool(x)
+        x = self.dequant(x) # Dequantize output if it needs to be float for subsequent float ops
+        return x
+
+    @classmethod
+    def from_float(cls, float_module):
+        q_module = cls(float_module.output_size)
+        return q_module
+
+
+
 class SPPModule(nn.Module):
     # Sau khi qua các lớp pooling, ta thu được các tensor có kích thước (B, C, 1, 1), (B, C, 2, 2), (B, C, 3, 3), (B, C, 6, 6)
     # Tiến hành làm phẳng thành 1-D vector: (B, C), (B, 4C), (B, 9C), (B, 16C) => cat lại (B, 30C)
@@ -19,9 +62,9 @@ class SPPModule(nn.Module):
     def __init__(self, pool_mode='avg', sizes=(1, 2, 3, 6)):
         super().__init__()
         if pool_mode == 'avg':
-            pool_layer = nn.AdaptiveAvgPool2d
+            pool_layer = AvgPoolingWrapper
         elif pool_mode == 'max':
-            pool_layer = nn.AdaptiveMaxPool2d
+            pool_layer = MaxPoolingWrapper
         else:
             raise NotImplementedError
 
