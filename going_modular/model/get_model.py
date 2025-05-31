@@ -42,9 +42,9 @@ def build(
             config =config,
             load_checkpoint = load_checkpoint
         )
-        
+        # model = model.to(device)
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
-
+        
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
         # for sub_module in model.modules():
