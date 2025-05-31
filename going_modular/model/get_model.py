@@ -44,14 +44,13 @@ def build(
         )
         
         model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
-        model = model.to(device)
 
         model.train()
         model = torch.ao.quantization.prepare_qat(model)
-        for sub_module in model.modules():
-            if isinstance(sub_module, USAGE_LAYERS) and hasattr(sub_module,"weight_fake_quant"):
-                sub_module.weight_fake_quant = sub_module.weight_fake_quant.to(device)
-
+        # for sub_module in model.modules():
+        #     if isinstance(sub_module, USAGE_LAYERS) and hasattr(sub_module,"weight_fake_quant"):
+        #         sub_module.weight_fake_quant = sub_module.weight_fake_quant.to(device)
+        model = model.to(device)
         return model
     else:
         model = ConcatMTLFaceRecognitionV3(
