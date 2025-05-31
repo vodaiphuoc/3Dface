@@ -114,9 +114,14 @@ class AttentionModule(nn.Module):
         spatial_input = torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
         spatial_scale = self.spatial(spatial_input)
 
-        print('channel_scale shape:  ', channel_scale.shape)
-        print('spatial_scale shape: ', spatial_scale.shape)
-        x_non_id = (x * channel_scale + x * spatial_scale) * 0.5
+        # print('channel_scale shape:  ', channel_scale.shape)
+        # print('spatial_scale shape: ', spatial_scale.shape)
+        
+        x_non_id = self.add_ops.add(
+            self.add_ops.mul(x, channel_scale), 
+            self.add_ops.mul(x, spatial_scale)
+        )
+        x_non_id = self.add_ops.mul_scalar(x_non_id, 0.5)
         
         x_id = self.add_ops.add(x, self.add_ops.mul_scalar(x_non_id, -1))
         
