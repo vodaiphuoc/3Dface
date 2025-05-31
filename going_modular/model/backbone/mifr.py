@@ -23,7 +23,7 @@ class SPPModuleAvg(nn.Module):
             nn.Sequential(
                 nn.AvgPool2d(kernel_size = 8//size) \
                     if 8%size == 0 else \
-                    nn.AvgPool2d(kernel_size = 4, stride= 1)
+                    nn.AvgPool2d(kernel_size = 4, stride= 2)
                 , 
                 nn.Flatten()
             ) 
@@ -44,7 +44,7 @@ class SPPModuleMax(nn.Module):
             nn.Sequential(
                 nn.MaxPool2d(kernel_size = 8//size) \
                     if 8%size == 0 else \
-                    nn.MaxPool2d(kernel_size = 4, stride= 1)
+                    nn.MaxPool2d(kernel_size = 4, stride= 2)
                 , 
                 nn.Flatten()
             ) 
