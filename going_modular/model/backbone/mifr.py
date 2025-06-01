@@ -225,11 +225,20 @@ class MIResNet(torch.nn.Module):
         x_id, x_gender = self.gender_fsm(x_non_pose)
         
         
-        x_non_spectacles, x_spectacles = self.dequant_backbone_output((x_non_spectacles, x_spectacles))
-        x_non_facial_hair, x_facial_hair = self.dequant_backbone_output((x_non_facial_hair, x_facial_hair))
-        x_non_emotion, x_emotion = self.dequant_backbone_output((x_non_emotion, x_emotion))
-        x_non_pose, x_pose = self.dequant_backbone_output((x_non_pose, x_pose))
-        x_id, x_gender = self.dequant_backbone_output((x_id, x_gender))
+        x_spectacles = self.dequant_backbone_output(x_spectacles)        
+        x_non_spectacles = self.dequant_backbone_output(x_non_spectacles)
+
+        x_facial_hair = self.dequant_backbone_output(x_facial_hair)
+        x_non_facial_hair = self.dequant_backbone_output(x_non_facial_hair)
+
+        x_emotion = self.dequant_backbone_output(x_emotion)
+        x_non_emotion = self.dequant_backbone_output(x_non_emotion)
+
+        x_pose = self.dequant_backbone_output(x_pose)
+        x_non_pose,  = self.dequant_backbone_output(x_non_pose)
+
+        x_gender = self.dequant_backbone_output(x_gender)
+        x_id = self.dequant_backbone_output(x_id)
 
         return (
                 (x_spectacles, x_non_spectacles),
