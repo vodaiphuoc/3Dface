@@ -6,11 +6,6 @@ seed = 42
 torch.manual_seed(seed)
 import copy
 
-
-from torchao.quantization.qat import (
-    Int8DynActInt4WeightQATQuantizer
-)
-
 class MultiMetricEarlyStopping:
     def __init__(
         self,
