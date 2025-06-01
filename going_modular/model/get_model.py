@@ -32,12 +32,10 @@ def build(
             backbone_quant_mode = quant_mode
         )
         if quant_mode == "qat":
-            torch.backends.quantized.engine = 'qnnpack'
             model.train()
             model = torch.ao.quantization.prepare_qat(model)
             model = torch.compile(model).to(device)
         else:
-            torch.backends.quantized.engine = 'qnnpack'
             model = torch.ao.quantization.prepare(model.train())
             model = model.to(device)
         
