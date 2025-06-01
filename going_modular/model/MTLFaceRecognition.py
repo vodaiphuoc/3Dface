@@ -95,7 +95,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             
             if init_backbone_state_dict.get(current_key) is not None:
                 backbone_state_dict[current_key] = v
-        
+        print('post process key',backbone_state_dict.keys())
 
         try:
             self.backbone.load_state_dict(backbone_state_dict)
