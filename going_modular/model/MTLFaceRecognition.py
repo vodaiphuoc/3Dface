@@ -81,6 +81,8 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         ckpt = torch.load(cache_ckpt_path, map_location= 'cpu')
         
         init_backbone_state_dict = self.backbone.state_dict()
+        print(init_backbone_state_dict.keys())
+        print(self.backbone_quant_mode)
         backbone_state_dict = {}
         for k,v in ckpt['model_state_dict'].items():
             current_key = k
