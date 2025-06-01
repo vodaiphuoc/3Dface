@@ -87,10 +87,10 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         for k,v in ckpt['model_state_dict'].items():
             current_key = k
             if "backbone" in k:
-                current_key = current_key.replace("backbone",'')
+                current_key = current_key.replace("backbone.",'')
 
             if self.backbone_quant_mode != "no":
-                current_key = "model" + current_key
+                current_key = "model." + current_key
             
             print(current_key, init_backbone_state_dict.get(current_key))
             if init_backbone_state_dict.get(current_key) is not None:
