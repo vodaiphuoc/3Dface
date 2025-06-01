@@ -9,13 +9,14 @@ import copy
 class MultiMetricEarlyStopping:
     def __init__(
         self,
+        test_loader: torch.utils.data.DataLoader,
         min_delta=0,
         patience=0,
         verbose=0,
         mode='min',
         monitor_keys=None,
         start_from_epoch=0,
-        save_dir=None
+        save_dir=None,
     ):
         """
         PyTorch Multi-Metric EarlyStopping
@@ -28,6 +29,7 @@ class MultiMetricEarlyStopping:
             monitor_keys (list): List of metric keys to monitor.
             save_dir (str): Directory to save the best weights for each metric.
         """
+        self.test_loader = test_loader
         self.min_delta = min_delta
         self.patience = patience
         self.verbose = verbose
@@ -89,7 +91,13 @@ class MultiMetricEarlyStopping:
                     
                     if use_quant:
                         copied_model = copy.deepcopy(model).cpu()
+                        copied_model = torch.ao.quantization.prepare(copied_model)
                         copied_model.eval()
+                        with torch.no_grad():
+                            for X, _ in self.test_dataloader:
+                                X = X.cpu()
+                                copied_model(X)
+
                         save_model = torch.ao.quantization.convert(copied_model)
                     else:
                         save_model = copy.deepcopy(model)
