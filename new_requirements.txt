@@ -1,3 +1,6 @@
-torchao
-fvcore
 scikit-learn
+torch
+albumentations
+psutil
+opencv-python
+opencv-python-headless

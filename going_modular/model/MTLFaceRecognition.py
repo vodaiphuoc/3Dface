@@ -31,7 +31,6 @@ BACKBONE_FREEZE = Literal[
     "layer1",
     "layer2",
     "layer3",
-    "layer4"
 ]
 
 from .modeling_output import (
@@ -110,8 +109,6 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             freeze_layer_names = []
             for name, sub_module in self.backbone.named_modules():
                 if freeze_options[:-1] + str(int(freeze_options[-1]) + 1) in name:
-                    break
-                elif "avgpool" in name:
                     break
                 else:
                     freeze_layer_names.append(name)

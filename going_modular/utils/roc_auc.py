@@ -158,4 +158,26 @@ def compute_auc(
                 auc_scores[task] = roc_auc_score(all_labels[task], all_preds[task])
                 
         return auc_scores
+
+
+
+# def auc_two_dataloder(
+#         test_dataloader: torch.utils.data.DataLoader, 
+#         gallery_dataloader: torch.utils.data.DataLoader, 
+#         model: ConcatMTLFaceRecognitionV3, 
+#         device: str,
+#         num_classes:int
+#     ):
+
+#     # build storage
+#     embeddings_storage = []
+#     with torch.no_grad():
+#         for batch in test_dataloader:
+#             images, y = batch
+#             # Lấy các nhãn thực tế từ y
+#             id = y[:, 0]
+
+#             outputs = model(images)
+#             output_embedding = outputs.id_embedding
+#             embeddings_storage.append((id, output_embedding))
     
