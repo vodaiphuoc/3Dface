@@ -57,7 +57,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         freeze_options: BACKBONE_FREEZE = config['freeze_options']
 
         self.backbone: Union[MIResNet, QuantMIResNet] = create_miresnet(backbone, backbone_quant_mode)
-        
+        self.backbone_quant_mode = backbone_quant_mode
         # Head
         self.id_head = IdRecognitionModule(in_features= 512, num_classes= num_classes)
         self.gender_head = AttributesDetectModule()
@@ -79,11 +79,22 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             subfolder= f"{mapkey}/models",
         )
         ckpt = torch.load(cache_ckpt_path, map_location= 'cpu')
-        backbone_state_dict = {
-            k.replace('backbone.',''):v 
-            for k,v in ckpt['model_state_dict'].items()
-            if "backbone" in k
-        }
+        
+        init_backbone_state_dict = self.backbone.state_dict()
+        backbone_state_dict = {}
+        for k,v in ckpt['model_state_dict'].items():
+            current_key = k
+            if "backbone" in k:
+                current_key = current_key.replace("backbone",'')
+
+            if self.backbone_quant_mode != "no":
+                current_key = "model" + current_key
+            
+            
+            if init_backbone_state_dict.get(current_key) is not None:
+                backbone_state_dict[current_key] = v
+        
+
         try:
             self.backbone.load_state_dict(backbone_state_dict)
             print(f'success in loading ckpt {mapkey} for backbone')
