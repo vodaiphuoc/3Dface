@@ -9,7 +9,7 @@ import copy
 class MultiMetricEarlyStopping:
     def __init__(
         self,
-        test_loader: torch.utils.data.DataLoader,
+        test_dataloader: torch.utils.data.DataLoader,
         min_delta=0,
         patience=0,
         verbose=0,
@@ -29,7 +29,7 @@ class MultiMetricEarlyStopping:
             monitor_keys (list): List of metric keys to monitor.
             save_dir (str): Directory to save the best weights for each metric.
         """
-        self.test_loader = test_loader
+        self.test_dataloader = test_dataloader
         self.min_delta = min_delta
         self.patience = patience
         self.verbose = verbose
