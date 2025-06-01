@@ -48,7 +48,8 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             self, 
             config: dict,
             load_checkpoint:bool,
-            mapkey: MAPTYPE_KEYS
+            mapkey: MAPTYPE_KEYS,
+            backbone_quant_mode: Literal['ptq','qat'] = None
         ):
         super().__init__()
 
@@ -56,7 +57,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         num_classes = config['num_classes']
         freeze_options: BACKBONE_FREEZE = config['freeze_options']
 
-        self.backbone = create_miresnet(backbone)
+        self.backbone = create_miresnet(backbone, backbone_quant_mode)
         
         # Head
         self.id_head = IdRecognitionModule(in_features= 512, num_classes= num_classes)
@@ -71,9 +72,6 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
 
         self._freeze_layers(freeze_options)
 
-        self.quant_backbone_input = torch.ao.quantization.QuantStub()
-        self.dequant_backbone_output = torch.ao.quantization.DeQuantStub()
-    
     def _load_backbone_ckpt(self, mapkey: MAPTYPE_KEYS):
         cache_ckpt_path = hf_hub_download(
             "Daiphuoc/3DFaceCheckpoints", 
@@ -127,21 +125,13 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
                         prams.requires_grad = True
 
     def forward(self, x:torch.Tensor)->MTLFaceForConcatOutputs:
-        x_quantized_input = self.quant_backbone_input(x)
         (
             (x_spectacles, x_non_spectacles),
             (x_facial_hair, x_non_facial_hair),
             (x_emotion, x_non_emotion),
             (x_pose, x_non_pose),
             (x_gender, x_id)
-        ) = self.backbone(x_quantized_input)
-
-        x_spectacles = self.dequant_backbone_output(x_spectacles)
-        x_facial_hair = self.dequant_backbone_output(x_facial_hair)
-        x_pose = self.dequant_backbone_output(x_pose)
-        x_emotion  = self.dequant_backbone_output(x_emotion)
-        x_gender = self.dequant_backbone_output(x_gender)
-        x_id = self.dequant_backbone_output(x_id)
+        ) = self.backbone(x)
 
         x_spectacles: HeadOutputs = self.spectacles_head(x_spectacles)
         x_facial_hair: HeadOutputs = self.facial_hair_head(x_facial_hair)

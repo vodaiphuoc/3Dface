@@ -150,6 +150,9 @@ class MIResNet(torch.nn.Module):
         self.pose_fsm = AttentionModule()
         self.gender_fsm = AttentionModule()
 
+        self.quant_backbone_input = torch.ao.quantization.QuantStub()
+        self.dequant_backbone_output = torch.ao.quantization.DeQuantStub()
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(
@@ -206,6 +209,7 @@ class MIResNet(torch.nn.Module):
 
 
     def forward(self, x):
+        x = self.quant_backbone_input(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.prelu(x)
@@ -220,6 +224,13 @@ class MIResNet(torch.nn.Module):
         x_non_pose, x_pose = self.pose_fsm(x_non_emotion)
         x_id, x_gender = self.gender_fsm(x_non_pose)
         
+        
+        x_non_spectacles, x_spectacles = self.dequant_backbone_output((x_non_spectacles, x_spectacles))
+        x_non_facial_hair, x_facial_hair = self.dequant_backbone_output((x_non_facial_hair, x_facial_hair))
+        x_non_emotion, x_emotion = self.dequant_backbone_output((x_non_emotion, x_emotion))
+        x_non_pose, x_pose = self.dequant_backbone_output((x_non_pose, x_pose))
+        x_id, x_gender = self.dequant_backbone_output((x_id, x_gender))
+
         return (
                 (x_spectacles, x_non_spectacles),
                 (x_facial_hair, x_non_facial_hair),
@@ -228,8 +239,8 @@ class MIResNet(torch.nn.Module):
                 (x_gender, x_id)
             )
 
-
-def create_miresnet(model_name, **kwargs):
+from typing import Literal
+def create_miresnet(model_name, backbone_quant_mode: Literal['ptq','qat'] = None):
     configs = {
         "miresnet18": (BasicBlock, [2, 2, 2, 2]),
         "miresnet34": (BasicBlock, [3, 4, 6, 3]),
@@ -241,7 +252,16 @@ def create_miresnet(model_name, **kwargs):
         raise ValueError(f"Model '{model_name}' không được hỗ trợ. Các model hợp lệ: {list(configs.keys())}")
     
     block, layers = configs[model_name]
-    return MIResNet(block, layers, **kwargs)
+    output_model = MIResNet(block, layers)
+
+    if backbone_quant_mode is not None:
+        if backbone_quant_mode == "qat":
+            output_model.qconfig = torch.ao.quantization.get_default_qat_qconfig('qnnpack')
+        else:
+            output_model.qconfig = torch.ao.quantization.get_default_qconfig('qnnpack')
+            
+
+    return output_model
 
 
 if __name__ == '__main':
