@@ -235,7 +235,7 @@ class MIResNet(torch.nn.Module):
         x_non_emotion = self.dequant_backbone_output(x_non_emotion)
 
         x_pose = self.dequant_backbone_output(x_pose)
-        x_non_pose,  = self.dequant_backbone_output(x_non_pose)
+        x_non_pose  = self.dequant_backbone_output(x_non_pose)
 
         x_gender = self.dequant_backbone_output(x_gender)
         x_id = self.dequant_backbone_output(x_id)
