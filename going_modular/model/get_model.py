@@ -15,14 +15,14 @@ USAGE_LAYERS = (
     nn.Flatten,
 )
 
-QUANT_MODES = Literal['ptq','qat']
+QUANT_MODES = Literal['ptq','qat','no']
 
 
 def build(
         config: dict, 
         load_checkpoint:bool = False,
         device: torch.device = torch.device('cuda'),
-        quant_mode: QUANT_MODES = "qat"
+        quant_mode: QUANT_MODES = "no"
     )->Union[ConcatMTLFaceRecognitionV3]:
     
     if config['use_quant']:

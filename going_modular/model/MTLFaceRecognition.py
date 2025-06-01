@@ -1,10 +1,10 @@
 import torch
 
 from .attr_head import AttributesDetectModule, IdRecognitionModule
-
+from .backbone.mifr import MIResNet, QuantMIResNet
 from .backbone.mifr import create_miresnet
 from .grl import GradientReverseLayer
-from typing import Literal
+from typing import Literal, Union
 
 
 # Đặt seed toàn cục
@@ -49,7 +49,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             config: dict,
             load_checkpoint:bool,
             mapkey: MAPTYPE_KEYS,
-            backbone_quant_mode: Literal['ptq','qat'] = None
+            backbone_quant_mode: Literal['ptq','qat','no'] = 'no'
         ):
         super().__init__()
 
@@ -57,7 +57,7 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
         num_classes = config['num_classes']
         freeze_options: BACKBONE_FREEZE = config['freeze_options']
 
-        self.backbone = create_miresnet(backbone, backbone_quant_mode)
+        self.backbone: Union[MIResNet, QuantMIResNet] = create_miresnet(backbone, backbone_quant_mode)
         
         # Head
         self.id_head = IdRecognitionModule(in_features= 512, num_classes= num_classes)

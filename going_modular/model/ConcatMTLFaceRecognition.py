@@ -27,7 +27,7 @@ class ConcatMTLFaceRecognitionV3(torch.nn.Module):
             self, 
             config: dict,
             load_checkpoint:bool,
-            backbone_quant_mode: Literal['ptq','qat'] = None
+            backbone_quant_mode: Literal['ptq','qat','no'] = "no"
         ):
         super().__init__()
         self.mtl_normalmap = MTLFaceRecognitionForConcat(
