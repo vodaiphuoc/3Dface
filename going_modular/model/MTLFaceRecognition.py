@@ -92,9 +92,10 @@ class MTLFaceRecognitionForConcat(torch.nn.Module):
             if self.backbone_quant_mode != "no":
                 current_key = "model." + current_key
             
-            
+            print(current_key, init_backbone_state_dict.get(current_key))
             if init_backbone_state_dict.get(current_key) is not None:
                 backbone_state_dict[current_key] = v
+
         print('post process key',backbone_state_dict.keys())
 
         try:
