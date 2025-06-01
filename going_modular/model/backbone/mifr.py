@@ -228,6 +228,7 @@ class MIResNet(torch.nn.Module):
 
 class QuantMIResNet(torch.nn.Module):
     def __init__(self, *args, **kwargs):
+        super().__init__()
         self.model = MIResNet(*args, **kwargs)
         self.quant_backbone_input = torch.ao.quantization.QuantStub()
         self.dequant_backbone_output = torch.ao.quantization.DeQuantStub()
