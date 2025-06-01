@@ -4,6 +4,6 @@
 doc/
 preprocess/
 myenv/
-test.py
+test*.py
 test_models/
 push.py

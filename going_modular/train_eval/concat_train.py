@@ -176,7 +176,7 @@ def train_epoch(
     optimizer: Optimizer, 
     device: str,
 ):
-    # model.to(device)
+    model.to(device)
     model.train()
 
     train_loss = 0

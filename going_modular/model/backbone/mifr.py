@@ -268,19 +268,6 @@ class QuantMIResNet(torch.nn.Module):
 
 
 from typing import Literal
-BACKEND = "x86"
-
-PTQ_QCONFIG = torch.ao.quantization.QConfig(
-    activation=torch.ao.quantization.observer.HistogramObserver.with_args(
-        qscheme=torch.per_tensor_affine, 
-        reduce_range = True, 
-        dtype=torch.quint8
-    ),
-    weight=torch.ao.quantization.observer.MinMaxObserver.with_args(
-        qscheme=torch.per_tensor_symmetric, 
-        dtype=torch.qint8)
-)
-
 def create_miresnet(model_name, backbone_quant_mode: Literal['ptq','qat','no'] = 'no'):
     configs = {
         "miresnet18": (BasicBlock, [2, 2, 2, 2]),
@@ -293,14 +280,7 @@ def create_miresnet(model_name, backbone_quant_mode: Literal['ptq','qat','no'] =
     block, layers = configs[model_name]
     
     if backbone_quant_mode != 'no':
-        output_model = QuantMIResNet(block, layers)
-        if backbone_quant_mode == "qat":
-            output_model.qconfig = PTQ_QCONFIG
-            torch.backends.quantized.engine = BACKEND
-        else:
-            output_model.qconfig = PTQ_QCONFIG
-            torch.backends.quantized.engine = BACKEND
-            
+        output_model = QuantMIResNet(block, layers)    
     else:
         output_model = MIResNet(block, layers)
     return output_model

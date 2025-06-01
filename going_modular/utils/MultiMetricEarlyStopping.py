@@ -6,6 +6,21 @@ seed = 42
 torch.manual_seed(seed)
 import copy
 
+BACKEND = "x86"
+
+PTQ_QCONFIG = torch.ao.quantization.QConfig(
+    activation=torch.ao.quantization.observer.HistogramObserver.with_args(
+        qscheme=torch.per_tensor_affine, 
+        reduce_range = True, 
+        dtype=torch.quint8
+    ),
+    weight=torch.ao.quantization.observer.MinMaxObserver.with_args(
+        qscheme=torch.per_tensor_symmetric, 
+        dtype=torch.qint8)
+)
+
+
+
 class MultiMetricEarlyStopping:
     def __init__(
         self,
@@ -91,6 +106,8 @@ class MultiMetricEarlyStopping:
                     
                     if use_quant:
                         copied_model = copy.deepcopy(model).cpu()
+                        copied_model.qconfig = PTQ_QCONFIG
+                        torch.backends.quantized.engine = BACKEND
                         copied_model = torch.ao.quantization.prepare(copied_model)
                         copied_model.eval()
                         with torch.no_grad():

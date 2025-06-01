@@ -161,23 +161,45 @@ def compute_auc(
 
 
 
-# def auc_two_dataloder(
-#         test_dataloader: torch.utils.data.DataLoader, 
-#         gallery_dataloader: torch.utils.data.DataLoader, 
-#         model: ConcatMTLFaceRecognitionV3, 
-#         device: str,
-#         num_classes:int
-#     ):
+def auc_two_dataloder(
+        test_dataloader: torch.utils.data.DataLoader, 
+        gallery_dataloader: torch.utils.data.DataLoader, 
+        model: ConcatMTLFaceRecognitionV3,
+        num_classes_testset:int
+    ):
 
-#     # build storage
-#     embeddings_storage = []
-#     with torch.no_grad():
-#         for batch in test_dataloader:
-#             images, y = batch
-#             # Lấy các nhãn thực tế từ y
-#             id = y[:, 0]
+    # build storage
+    embeddings_list = []
+    with torch.no_grad():
+        for batch in test_dataloader:
+            images, y = batch
+            # Lấy các nhãn thực tế từ y
+            id = y[:, 0]
 
-#             outputs = model(images)
-#             output_embedding = outputs.id_embedding
-#             embeddings_storage.append((id, output_embedding))
+            outputs = model(images)
+            output_embedding = outputs.id_embedding
+            embeddings_list.append((id, output_embedding))
     
+    all_ids = torch.cat([x[0] for x in embeddings_list], dim=0)
+    all_embeddings = torch.cat([x[1] for x in embeddings_list], dim=0)
+    all_embeddings_norm = all_embeddings / all_embeddings.norm(p=2, dim=1, keepdim=True)
+
+    acc = 0.0
+    with torch.no_grad():
+        for batch in gallery_dataloader:
+            images, y = batch
+            # Lấy các nhãn thực tế từ y
+            gallery_id = y[:, 0]
+
+            outputs = model(images)
+            output_embedding = outputs.id_embedding
+            output_embedding_norm = output_embedding / output_embedding.norm(p=2, dim=1, keepdim=True)
+        
+            # shape (batch, num_samples in test set)
+            cosine_similarities = torch.mm(output_embedding_norm, all_embeddings_norm.t())
+            predict_class = all_ids[cosine_similarities.argmax(dim = -1)]
+
+            correct_predict = torch.where(predict_class == gallery_id)
+            acc += len(correct_predict)/images.shape[0]
+
+    print('mean accuracy: ', acc/len(gallery_dataloader))
