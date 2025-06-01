@@ -6,18 +6,27 @@ seed = 42
 torch.manual_seed(seed)
 
 class ModelCheckpoint:
-    def __init__(self, 
-                 filepath,
-                 verbose=0
+    def __init__(
+            self, 
+            filepath,
+            test_dataloader: torch.utils.data.DataLoader,
+            verbose=0,
         ):
         self.filepath = filepath
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         self.verbose = verbose
+        self.test_dataloader = test_dataloader
 
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
             copied_model = copy.deepcopy(model).cpu()
+            copied_model = torch.ao.quantization.prepare(copied_model)
             copied_model.eval()
+            with torch.no_grad():
+                for X, _ in self.test_dataloader:
+                    X = X.cpu()
+                    copied_model(X)
+
             save_model = torch.ao.quantization.convert(copied_model)
         else:
             save_model = copy.deepcopy(model)
