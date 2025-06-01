@@ -5,6 +5,8 @@ import copy
 seed = 42
 torch.manual_seed(seed)
 
+BACKEND = "x86"
+
 class ModelCheckpoint:
     def __init__(
             self, 
@@ -20,6 +22,7 @@ class ModelCheckpoint:
     def __call__(self, model, optimizer, epoch, use_quant:bool):
         if use_quant:
             copied_model = copy.deepcopy(model).cpu()
+            torch.backends.quantized.engine = BACKEND
             copied_model = torch.ao.quantization.prepare(copied_model)
             copied_model.eval()
             with torch.no_grad():
