@@ -25,9 +25,9 @@ def fit(
     test_dataloader: DataLoader,
     criterion: Module,
     optimizer: Optimizer,
-    scheduler,
     early_stopping: MultiMetricEarlyStopping,
-    model_checkpoint: ModelCheckpoint
+    model_checkpoint: ModelCheckpoint,
+    scheduler = None,
 ):
     log_dir = os.path.abspath(conf['checkpoint_dir'] + '/logs')
     writer = SummaryWriter(log_dir=log_dir)
@@ -164,7 +164,8 @@ def fit(
         # if early_max_stopping.early_stop and early_min_stopping.early_stop:
         #     break
         
-        scheduler.step(epoch)
+        if scheduler is not None:
+            scheduler.step(epoch)
         
     writer.close()
  

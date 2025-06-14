@@ -75,15 +75,17 @@ class IdRecognitionModule(nn.Module):
         if for_concat_model:
             self.id_embedding = nn.Sequential(
                 nn.BatchNorm1d(in_features),
-                nn.Linear(in_features, in_features)
+                nn.Linear(in_features, in_features),
+                nn.Linear(in_features, in_features//2)
             )
+            self.maglinear = MagLinear(in_features//2, num_classes)
         else:
             self.id_embedding = nn.Sequential(
                 nn.BatchNorm2d(in_features),
                 nn.AvgPool2d(kernel_size = 8),
                 nn.Flatten(),
             )
-        self.maglinear = MagLinear(in_features, num_classes)
+            self.maglinear = MagLinear(in_features, num_classes)
 
     def forward(self, x_id: torch.Tensor)->HeadOutputs:
         x_id_embedding = self.id_embedding(x_id)
@@ -99,6 +101,7 @@ class AttributesDetectModule(nn.Module):
         super().__init__()
         out_neurons = 2
         self.embedding = nn.Sequential(
+            nn.Linear(512, 512),
             nn.BatchNorm2d(512),
             nn.AvgPool2d(kernel_size = 8),
             nn.Flatten(),
