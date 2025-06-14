@@ -101,10 +101,10 @@ class AttributesDetectModule(nn.Module):
         super().__init__()
         out_neurons = 2
         self.embedding = nn.Sequential(
-            nn.Linear(512, 512),
             nn.BatchNorm2d(512),
             nn.AvgPool2d(kernel_size = 8),
             nn.Flatten(),
+            nn.Linear(512, 512),
         )
         self.emotion_linear = nn.Linear(512, out_neurons)
 
